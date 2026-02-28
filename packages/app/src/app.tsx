@@ -14,6 +14,10 @@ import { RecruiterDashboardPage } from "./pages/recruiter-dashboard";
 import { RecruiterOfferFormPage } from "./pages/recruiter-offer-form";
 import { RecruiterApplicationsPage } from "./pages/recruiter-applications";
 import { AdminReportsPage } from "./pages/admin-reports";
+import { TalentsPage } from "./pages/talents";
+import { RecruteursPage } from "./pages/recruteurs";
+import { AboutPage } from "./pages/about";
+import { AidePage } from "./pages/aide";
 import type { ReactNode } from "react";
 import type { Role } from "./lib/types";
 
@@ -60,6 +64,10 @@ export function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/offers" element={<OffersPage />} />
           <Route path="/offers/:id" element={<OfferDetailPage />} />
+          <Route path="/talents" element={<TalentsPage />} />
+          <Route path="/recruteurs" element={<RecruteursPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/aide" element={<AidePage />} />
 
           <Route
             path="/performer/profile"
