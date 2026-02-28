@@ -4,11 +4,12 @@ import { useAuth } from "../lib/auth-context";
 import { useLang, type Lang } from "../lib/lang-context";
 import { useTheme } from "../lib/theme-context";
 import { Button } from "./ui";
+import appLogo from "../assets/LOGOS/LOGO-06.png";
 
 function navClass({ isActive }: { isActive: boolean }): string {
   return isActive
-    ? "text-gold-400 font-medium"
-    : "text-cream-400 hover:text-gold-400 transition-colors duration-200";
+    ? "text-gold-400 font-medium whitespace-nowrap"
+    : "text-cream-400 hover:text-gold-400 transition-colors duration-200 whitespace-nowrap";
 }
 
 const LANGS: { code: Lang; flag: string; label: string }[] = [
@@ -111,18 +112,19 @@ export function Navbar() {
 
   return (
     <nav className="bg-noir-950/80 backdrop-blur-xl border-b border-noir-700/30 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+      <div className="max-w-[88rem] mx-auto px-5 sm:px-8 lg:px-10">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
+          <Link to="/" className="flex items-center gap-3 group shrink-0">
+            <img src={appLogo} alt="CATOURNE" className="w-9 h-9 rounded-xl object-cover" />
             <span className="font-display text-xl font-bold tracking-tight">
-              <span className="text-gold-500">CAT</span>
-              <span className="text-cream-100">OURNE</span>
+              <span className="text-gold-500">CA</span>
+              <span className="text-cream-100">TOURNE</span>
             </span>
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-8 text-sm">
+          <div className="hidden xl:flex flex-1 items-center justify-center gap-6 text-sm px-8">
             <NavLink to="/offers" className={navClass}>{t.castings}</NavLink>
             <NavLink to="/talents" className={navClass}>{t.talents}</NavLink>
             <NavLink to="/recruteurs" className={navClass}>{t.recruteurs}</NavLink>
@@ -148,12 +150,12 @@ export function Navbar() {
           </div>
 
           {/* Auth buttons + lang + theme */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden xl:flex items-center gap-3 shrink-0">
             <ThemeToggle />
             <LangSwitcher />
             {user ? (
               <div className="flex items-center gap-4">
-                <span className="text-xs text-cream-500 tracking-wide">{user.email}</span>
+                <span className="text-xs text-cream-500 tracking-wide max-w-44 truncate">{user.email}</span>
                 <RoleBadge role={user.role} />
                 <Button variant="ghost" size="sm" onClick={handleLogout}>{t.logout}</Button>
               </div>
@@ -170,7 +172,7 @@ export function Navbar() {
           </div>
 
           {/* Mobile controls */}
-          <div className="md:hidden flex items-center gap-2">
+          <div className="xl:hidden flex items-center gap-2">
             <ThemeToggle />
             <LangSwitcher />
             <button
@@ -190,7 +192,7 @@ export function Navbar() {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden pb-6 pt-2 space-y-1 border-t border-noir-700/50 mt-2">
+          <div className="xl:hidden pb-6 pt-2 space-y-1 border-t border-noir-700/50 mt-2">
             <NavLink to="/offers" className="block py-2.5 text-sm text-cream-400 hover:text-gold-400 transition-colors" onClick={() => setMobileOpen(false)}>{t.castings}</NavLink>
             <NavLink to="/talents" className="block py-2.5 text-sm text-cream-400 hover:text-gold-400 transition-colors" onClick={() => setMobileOpen(false)}>{t.talents}</NavLink>
             <NavLink to="/recruteurs" className="block py-2.5 text-sm text-cream-400 hover:text-gold-400 transition-colors" onClick={() => setMobileOpen(false)}>{t.recruteurs}</NavLink>

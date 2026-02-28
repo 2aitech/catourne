@@ -615,6 +615,14 @@ Bun.serve({
         });
       }
 
+      if (method === "GET" && pathname === "/uploads/performer-gallery/me") {
+        const auth = requireAuth(req, ["performer"]);
+        if (auth instanceof Response) {
+          return auth;
+        }
+        return json({ images: getPerformerGallery(auth.id) });
+      }
+
       if (method === "POST" && pathname === "/uploads/performer-gallery") {
         const auth = requireAuth(req, ["performer"]);
         if (auth instanceof Response) {
@@ -816,6 +824,31 @@ Bun.serve({
             role: auth.role,
           },
         });
+      }
+
+      if (method === "GET" && pathname === "/performers") {
+        const rows = db.query(
+          `SELECT pp.user_id, pp.stage_name, pp.city, pp.bio, pp.specialty,
+                  pp.photo_url, pp.languages_json, pp.completion_score
+           FROM performer_profiles pp
+           JOIN users u ON u.id = pp.user_id
+           WHERE u.is_suspended = 0
+             AND pp.completion_score >= 60
+           ORDER BY pp.updated_at DESC`
+        ).all() as Array<Record<string, unknown>>;
+
+        const performers = rows.map((r) => ({
+          user_id: asString(r.user_id),
+          stage_name: asString(r.stage_name),
+          city: asString(r.city),
+          bio: asString(r.bio),
+          specialty: asString(r.specialty),
+          photo_url: asString(r.photo_url),
+          languages: parseStoredLanguages(r.languages_json),
+          completion_score: Number(r.completion_score) || 0,
+        }));
+
+        return json({ performers });
       }
 
       if (method === "GET" && pathname === "/performers/me") {
