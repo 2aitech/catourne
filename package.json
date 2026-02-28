@@ -1,0 +1,19 @@
+{
+  "name": "casting",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev:api": "bun run --filter @casting/api dev",
+    "dev:app": "bun run --filter @casting/app dev",
+    "dev": "bun run dev:api",
+    "build:api": "bun run --filter @casting/api build",
+    "build:app": "bun run --filter @casting/app build",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.9.3"
+  }
+}

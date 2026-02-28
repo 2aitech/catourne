@@ -1,0 +1,10 @@
+{
+  "name": "@casting/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "start": "bun src/server.ts",
+    "build": "bun build --target bun src/server.ts --outdir dist"
+  }
+}

@@ -1,0 +1,36 @@
+KPI Produit (hors contrainte hackathon)
+
+North Star KPI
+1) Taux de liquidité des offres (7 jours)
+   Formule: # offres publiées ayant >= 1 candidature en 7j / # offres publiées
+   Pourquoi: c’est le KPI principal d’une marketplace recrutement/casting, car il mesure la rencontre réelle entre offre et demande.
+
+KPIs secondaires clés
+2) Temps médian jusqu’à la 1re candidature
+   Formule: médiane(offer_published_at -> first_application_at)
+   Pourquoi: mesure la vitesse de création de valeur.
+
+3) Activation recruteur (J+7)
+   Formule: # nouveaux recruteurs qui publient >= 1 offre en 7j / # nouveaux recruteurs
+   Pourquoi: mesure la capacité du produit à convertir un recruteur inscrit en recruteur actif.
+
+4) Activation performeur (J+7)
+   Formule: # nouveaux performeurs qui envoient >= 1 candidature en 7j / # nouveaux performeurs
+   Pourquoi: mesure la capacité du produit à convertir un performeur inscrit en candidat actif.
+
+5) Candidatures par offre publiée
+   Formule: # candidatures totales / # offres publiées
+   Pourquoi: mesure la profondeur de la demande.
+
+6) Taux de candidatures qualifiées
+   Formule: # candidatures passées en in_review ou shortlisted / # candidatures soumises
+   Pourquoi: mesure la qualité des candidatures reçues.
+
+7) Rétention D30 (2 côtés)
+   Formule: % recruteurs actifs à D30 et % performeurs actifs à D30
+   Pourquoi: sans rétention, pas de marketplace durable.
+
+Si tu dois en présenter seulement 3:
+- Taux de liquidité des offres (7j)
+- Temps jusqu’à la 1re candidature
+- Taux de candidatures qualifiées

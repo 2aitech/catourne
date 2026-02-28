@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Playfair Display", "Georgia", serif;
+  --font-sans: "DM Sans", "Avenir Next", system-ui, sans-serif;
+
+  /* Deep cinematic blacks */
+  --color-noir-950: #06060a;
+  --color-noir-900: #0a0a10;
+  --color-noir-800: #111118;
+  --color-noir-700: #1a1a24;
+  --color-noir-600: #252530;
+  --color-noir-500: #3a3a48;
+  --color-noir-400: #5a5a6e;
+  --color-noir-300: #858599;
+  --color-noir-200: #adadbe;
+  --color-noir-100: #d4d4e0;
+  --color-noir-50: #eeeeF4;
+
+  /* Warm Moroccan gold */
+  --color-gold-50: #fefbf0;
+  --color-gold-100: #fdf4d6;
+  --color-gold-200: #fae7a8;
+  --color-gold-300: #f5d470;
+  --color-gold-400: #e8bc3f;
+  --color-gold-500: #d4a853;
+  --color-gold-600: #b8882a;
+  --color-gold-700: #956a1e;
+  --color-gold-800: #7a5418;
+  --color-gold-900: #5c3f12;
+
+  /* Cream/ivory for text */
+  --color-cream-50: #fefdfb;
+  --color-cream-100: #faf8f3;
+  --color-cream-200: #f0ede4;
+  --color-cream-300: #e0dbd0;
+  --color-cream-400: #c8c2b4;
+  --color-cream-500: #a8a294;
+
+  /* Deep burgundy accent */
+  --color-wine-50: #fdf2f4;
+  --color-wine-100: #fce4e8;
+  --color-wine-200: #f9ccd4;
+  --color-wine-300: #f2a0ae;
+  --color-wine-400: #e86c82;
+  --color-wine-500: #d44060;
+  --color-wine-600: #b22548;
+  --color-wine-700: #8c1c3a;
+  --color-wine-800: #6e1830;
+  --color-wine-900: #4d1122;
+
+  /* Emerald for success states */
+  --color-jade-500: #3aaf7a;
+  --color-jade-600: #2a9466;
+  --color-jade-100: #e6f7ef;
+  --color-jade-700: #1f7a52;
+}
+
+body {
+  @apply bg-noir-950 text-cream-200 antialiased;
+  font-family: "DM Sans", system-ui, sans-serif;
+}
+
+/* Film grain overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* Smooth page transitions */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-enter {
+  animation: fadeSlideUp 0.5s ease-out both;
+}
+
+/* Staggered children */
+.stagger-children > * {
+  animation: fadeSlideUp 0.5s ease-out both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 360ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 420ms; }
+
+/* Gold shimmer on hover */
+@keyframes goldShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.gold-shimmer:hover {
+  background: linear-gradient(
+    90deg,
+    var(--color-gold-500) 0%,
+    var(--color-gold-300) 40%,
+    var(--color-gold-500) 60%,
+    var(--color-gold-400) 100%
+  );
+  background-size: 200% auto;
+  animation: goldShimmer 2s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Zellige-inspired decorative border pattern */
+.zellige-border {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--color-gold-700) 0px,
+    var(--color-gold-700) 4px,
+    transparent 4px,
+    transparent 12px
+  );
+  height: 2px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-noir-900);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-noir-600);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-noir-500);
+}
+
+/* Selection color */
+::selection {
+  background: var(--color-gold-600);
+  color: var(--color-cream-50);
+}
