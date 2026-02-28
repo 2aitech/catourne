@@ -33,6 +33,8 @@ const translations = {
       heroDesc: "La plateforme qui connecte talents locaux et productions cinematographiques dans la capitale du cinema africain.",
       heroBtnTalent: "Je suis Talent",
       heroBtnRecruiter: "Je suis Recruteur",
+      heroJoinNow: "Rejoindre maintenant",
+      heroPostJob: "Publier une offre",
       heroDashboard: "Mon tableau de bord",
       heroBrowse: "Parcourir les offres",
 
@@ -54,6 +56,8 @@ const translations = {
       // Casting Grid
       gridLabel: "Opportunites",
       gridHeading: "Explorez des milliers d'offres ouvertes",
+      gridInfiniteLabel: "Opportunites infinies, candidatures illimitees",
+      gridInfiniteAccent: "milliers",
       gridViewAll: "Voir toutes les offres",
       gridDeadline: "Limite :",
       gridApply: "Postuler",
@@ -123,6 +127,8 @@ const translations = {
       heroDesc: "The platform connecting local talents with film productions in the capital of African cinema.",
       heroBtnTalent: "I'm a Talent",
       heroBtnRecruiter: "I'm a Recruiter",
+      heroJoinNow: "Join now",
+      heroPostJob: "Post a job",
       heroDashboard: "My dashboard",
       heroBrowse: "Browse offers",
 
@@ -144,6 +150,8 @@ const translations = {
       // Casting Grid
       gridLabel: "Opportunities",
       gridHeading: "Explore thousands of open jobs",
+      gridInfiniteLabel: "Infinite opportunities, unlimited applications",
+      gridInfiniteAccent: "thousands",
       gridViewAll: "View all offers",
       gridDeadline: "Deadline:",
       gridApply: "Apply",
@@ -213,6 +221,8 @@ const translations = {
       heroDesc: "المنصة التي تربط المواهب المحلية بالإنتاجات السينمائية في عاصمة السينما الأفريقية.",
       heroBtnTalent: "أنا موهبة",
       heroBtnRecruiter: "أنا مجنِّد",
+      heroJoinNow: "انضم الآن",
+      heroPostJob: "انشر عرضا",
       heroDashboard: "لوحة التحكم",
       heroBrowse: "استعرض العروض",
 
@@ -234,6 +244,8 @@ const translations = {
       // Casting Grid
       gridLabel: "الفرص",
       gridHeading: "استكشف آلاف العروض المتاحة",
+      gridInfiniteLabel: "فرص لا حدود لها، طلبات غير محدودة",
+      gridInfiniteAccent: "آلاف",
       gridViewAll: "عرض جميع العروض",
       gridDeadline: "الموعد النهائي:",
       gridApply: "تقدم",
