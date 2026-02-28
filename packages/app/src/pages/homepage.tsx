@@ -15,6 +15,8 @@ export function HomePage() {
   const [recentOffers, setRecentOffers] = useState<Offer[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
+  const [activeWhyTab, setActiveWhyTab] = useState("cinema");
+  const [expandedWhyStep, setExpandedWhyStep] = useState<string | null>("step-1");
   const [heroAudience, setHeroAudience] = useState<"performer" | "recruiter">("performer");
 
   useEffect(() => {
@@ -30,6 +32,43 @@ export function HomePage() {
     { key: "tech", label: h.filtersCategoryTech },
     { key: "model", label: h.filtersCategoryModel },
     { key: "voice", label: h.filtersCategoryVoice },
+  ];
+  const whyCatourneTabs = [
+    {
+      value: "cinema",
+      label: "Cinéma",
+      src: "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=1000",
+      alt: "Cinéma",
+    },
+    {
+      value: "pub",
+      label: "Publicité",
+      src: "https://images.unsplash.com/photo-1533750349088-cd871a92f312?auto=format&fit=crop&q=80&w=1000",
+      alt: "Publicité",
+    },
+    {
+      value: "mode",
+      label: "Mode",
+      src: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1000",
+      alt: "Mode",
+    },
+  ];
+  const whyCatourneSteps = [
+    {
+      id: "step-1",
+      title: "Réseau Premium",
+      text: "Accédez à des directeurs de casting et des producteurs vérifiés. Fini les intermédiaires douteux.",
+    },
+    {
+      id: "step-2",
+      title: "Matching Intelligent",
+      text: "Notre IA analyse votre profil et vous propose uniquement les rôles qui vous correspondent vraiment.",
+    },
+    {
+      id: "step-3",
+      title: "Visibilité Maximale",
+      text: "Votre portfolio est optimisé pour être mis en avant auprès des décideurs du secteur au bon moment.",
+    },
   ];
   const heroGuestHref =
     heroAudience === "recruiter" ? "/register?role=recruiter" : "/register?role=performer";
@@ -90,9 +129,9 @@ export function HomePage() {
 
             {/* Heading */}
             <h1 className="font-serif text-5xl font-bold leading-[1.05] tracking-tight text-cream-50 sm:text-7xl lg:text-8xl">
-              {h.heroHeading}
+              Le talent rencontre
               <br />
-              <span className="text-gradient-gold italic">{h.heroHeadingAccent}</span>
+              <span className="text-gradient-gold italic">l'opportunite</span>
             </h1>
 
             <p className="mx-auto mt-8 max-w-2xl text-base leading-relaxed text-cream-400 sm:text-xl">
@@ -387,38 +426,126 @@ export function HomePage() {
         </PageContainer>
       </section>
 
-      {/* ─── HOW IT WORKS ─── */}
-      <section className="py-32 bg-noir-950 relative overflow-hidden border-t border-b border-white/5">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(194,142,76,0.07),transparent_55%)] pointer-events-none" />
-        <PageContainer className="relative">
-          <div className="text-center mb-16">
-            <span className="text-gold-500 font-bold uppercase tracking-[0.2em] text-sm mb-4 block">
-              {h.howLabel}
+      {/* ─── WHY CATOURNE (FeatureShowcase match) ─── */}
+      <section className="w-full border-t border-b border-white/5 bg-[#0a0a0a] text-cream-100">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 py-16 md:grid-cols-12 md:py-20 lg:gap-14">
+          <div className="md:col-span-6">
+            <span className="mb-6 inline-flex items-center rounded-sm border border-gold-500 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-gold-500">
+              Pourquoi nous ?
             </span>
-            <h2 className="font-serif text-4xl font-bold text-cream-100 sm:text-6xl">
-              {h.howHeading}
+
+            <h2 className="text-balance font-serif text-4xl font-bold leading-[0.95] text-white sm:text-5xl md:text-6xl">
+              Pourquoi <span className="text-gold-500 italic">CATOURNE</span> ?
             </h2>
-            <div className="mt-5 mx-auto w-24 h-px bg-gradient-to-r from-transparent via-gold-500 to-transparent" />
+
+            <p className="mt-6 max-w-xl text-white/60">
+              Nous redéfinissons le casting au Maroc en connectant les meilleurs talents avec les productions les plus prestigieuses.
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              {["+1000 Castings", "Matching IA", "Profil Premium"].map((stat) => (
+                <span
+                  key={stat}
+                  className="inline-flex items-center rounded-sm border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs text-white"
+                >
+                  {stat}
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-10 max-w-xl">
+              {whyCatourneSteps.map((step) => (
+                <div key={step.id} className="border-b border-white/10">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedWhyStep(expandedWhyStep === step.id ? null : step.id)
+                    }
+                    className="flex w-full items-center justify-between py-4 text-left font-serif text-base font-medium text-white transition-colors hover:text-gold-500"
+                  >
+                    <span>{step.title}</span>
+                    <span
+                      className={`transition-transform duration-200 ${
+                        expandedWhyStep === step.id ? "rotate-180" : ""
+                      }`}
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </span>
+                  </button>
+                  {expandedWhyStep === step.id ? (
+                    <p className="pb-4 text-sm font-serif text-white/60">
+                      {step.text}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link to="/register">
+                  <Button
+                    size="lg"
+                    className="border-none bg-gradient-to-r from-gold-700 via-gold-500 to-gold-400 text-white hover:from-gold-600 hover:via-gold-400 hover:to-gold-300"
+                  >
+                    Commencer
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-4">
-            <StepCard number={1} title={h.step1Title} desc={h.step1Desc} icon="profile" />
-            <StepCard number={2} title={h.step2Title} desc={h.step2Desc} icon="search" />
-            <StepCard number={3} title={h.step3Title} desc={h.step3Desc} icon="apply" />
-            <StepCard number={4} title={h.step4Title} desc={h.step4Desc} icon="star" />
-          </div>
+          <div className="md:col-span-6">
+            <div
+              className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-0 shadow-2xl"
+              style={{ height: 600, minHeight: 600 }}
+            >
+              <div className="relative h-full w-full">
+                {whyCatourneTabs.map((tab, index) => (
+                  <img
+                    key={tab.value}
+                    src={tab.src}
+                    alt={tab.alt}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    referrerPolicy="no-referrer"
+                    className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
+                      activeWhyTab === tab.value ? "opacity-100" : "pointer-events-none opacity-0"
+                    }`}
+                  />
+                ))}
+              </div>
 
-          <div className="mt-16 text-center">
-            <Link to="/register">
-              <Button
-                size="lg"
-                className="rounded-full px-12 text-[10px] font-bold uppercase tracking-widest shadow-xl shadow-gold-500/10"
-              >
-                {h.ctaRegister}
-              </Button>
-            </Link>
+              <div className="pointer-events-auto absolute inset-x-0 bottom-4 z-10 flex w-full justify-center">
+                <div className="flex gap-2 rounded-xl border border-white/10 bg-black/60 p-1 backdrop-blur supports-[backdrop-filter]:bg-black/40">
+                  {whyCatourneTabs.map((tab) => (
+                    <button
+                      key={tab.value}
+                      type="button"
+                      onClick={() => setActiveWhyTab(tab.value)}
+                      className={`rounded-lg px-4 py-2 font-serif transition-colors ${
+                        activeWhyTab === tab.value
+                          ? "bg-gold-500 text-white"
+                          : "text-white/70 hover:text-white"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-        </PageContainer>
+        </div>
       </section>
 
       {/* ─── WHY CATOURNE (FeatureShowcase) ─── */}
@@ -768,81 +895,4 @@ function SkeletonCastingCard() {
       </div>
     </div>
   );
-}
-
-function StepCard({
-  number,
-  title,
-  desc,
-  icon,
-}: {
-  number: number;
-  title: string;
-  desc: string;
-  icon: string;
-}) {
-  return (
-    <div className="group relative overflow-hidden rounded-[2rem] border border-noir-700/70 bg-noir-950/55 p-7">
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-gold-500/60 to-transparent opacity-60" />
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-gold-500/20 bg-gold-500/5 text-gold-400 transition-colors duration-300 group-hover:bg-gold-500/10">
-          <StepIcon type={icon} />
-        </div>
-        <span className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-500">
-          0{number}
-        </span>
-      </div>
-      <h3 className="font-serif text-2xl font-semibold text-cream-100">{title}</h3>
-      <p className="mt-4 text-sm leading-relaxed text-cream-400">{desc}</p>
-    </div>
-  );
-}
-
-function StepIcon({ type }: { type: string }) {
-  const cls = "h-6 w-6";
-
-  switch (type) {
-    case "profile":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-          />
-        </svg>
-      );
-    case "search":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-          />
-        </svg>
-      );
-    case "apply":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
-          />
-        </svg>
-      );
-    case "star":
-      return (
-        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-          />
-        </svg>
-      );
-    default:
-      return null;
-  }
 }
