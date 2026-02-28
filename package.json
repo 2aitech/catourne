@@ -6,9 +6,11 @@
   "workspaces": ["packages/*"],
   "scripts": {
     "dev:api": "bun run --filter @casting/api dev",
+    "dev:ml": "bun run --filter @casting/ml dev",
     "dev:app": "bun run --filter @casting/app dev",
     "dev": "bun run dev:api",
     "build:api": "bun run --filter @casting/api build",
+    "build:ml": "bun run --filter @casting/ml build",
     "build:app": "bun run --filter @casting/app build",
     "typecheck": "bunx tsc --noEmit"
   },

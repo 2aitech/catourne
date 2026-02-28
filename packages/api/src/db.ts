@@ -34,12 +34,28 @@ CREATE TABLE IF NOT EXISTS performer_profiles (
   city TEXT DEFAULT '',
   bio TEXT DEFAULT '',
   specialty TEXT DEFAULT '',
+  phone TEXT DEFAULT '',
+  height_cm TEXT DEFAULT '',
+  weight_kg TEXT DEFAULT '',
+  neck_circumference_cm TEXT DEFAULT '',
+  pant_length_cm TEXT DEFAULT '',
+  head_circumference_cm TEXT DEFAULT '',
+  chest_circumference_cm TEXT DEFAULT '',
+  shoe_size TEXT DEFAULT '',
   languages_json TEXT DEFAULT '[]',
   photo_url TEXT DEFAULT '',
   completion_score INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS performer_gallery_images (
+  id TEXT PRIMARY KEY,
+  performer_user_id TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (performer_user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS recruiter_profiles (
@@ -100,7 +116,70 @@ CREATE TABLE IF NOT EXISTS admin_actions (
   FOREIGN KEY (admin_user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (report_id) REFERENCES reports(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS match_impressions (
+  id TEXT PRIMARY KEY,
+  offer_id TEXT NOT NULL,
+  recruiter_user_id TEXT NOT NULL,
+  performer_user_id TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'manual',
+  rule_score REAL NOT NULL,
+  ml_score REAL,
+  final_score REAL NOT NULL,
+  model_version TEXT DEFAULT '',
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE CASCADE,
+  FOREIGN KEY (recruiter_user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (performer_user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_match_impressions_offer_created
+  ON match_impressions (offer_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS match_actions (
+  id TEXT PRIMARY KEY,
+  impression_id TEXT,
+  offer_id TEXT NOT NULL,
+  recruiter_user_id TEXT NOT NULL,
+  performer_user_id TEXT NOT NULL,
+  action TEXT NOT NULL CHECK (
+    action IN ('viewed', 'in_review', 'shortlisted', 'rejected', 'selected')
+  ),
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (impression_id) REFERENCES match_impressions(id) ON DELETE SET NULL,
+  FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE CASCADE,
+  FOREIGN KEY (recruiter_user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (performer_user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_match_actions_offer_created
+  ON match_actions (offer_id, created_at DESC);
 `);
+
+const performerProfileColumns = new Set(
+  (
+    db.query("PRAGMA table_info(performer_profiles)").all() as Array<{
+      name: string;
+    }>
+  ).map((column) => column.name),
+);
+
+const performerProfileExtraColumns: Array<[string, string]> = [
+  ["phone", "TEXT DEFAULT ''"],
+  ["height_cm", "TEXT DEFAULT ''"],
+  ["weight_kg", "TEXT DEFAULT ''"],
+  ["neck_circumference_cm", "TEXT DEFAULT ''"],
+  ["pant_length_cm", "TEXT DEFAULT ''"],
+  ["head_circumference_cm", "TEXT DEFAULT ''"],
+  ["chest_circumference_cm", "TEXT DEFAULT ''"],
+  ["shoe_size", "TEXT DEFAULT ''"],
+];
+
+for (const [name, definition] of performerProfileExtraColumns) {
+  if (!performerProfileColumns.has(name)) {
+    db.exec(`ALTER TABLE performer_profiles ADD COLUMN ${name} ${definition};`);
+  }
+}
 
 const userCount = db.query("SELECT COUNT(*) AS count FROM users").get() as {
   count: number;

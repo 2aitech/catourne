@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { db } from "./db";
+import { buildMlFeatures, computeRuleMatch, type MatchOffer, type MatchPerformer } from "./matching";
 
 type Role = "performer" | "recruiter" | "admin";
 
@@ -20,6 +21,8 @@ const CORS_HEADERS = {
 const UPLOADS_DIR = `${import.meta.dir}/../data/uploads`;
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const ML_SERVICE_URL = (process.env.ML_SERVICE_URL ?? "http://localhost:3010").replace(/\/+$/, "");
+const ML_TIMEOUT_MS = Number(process.env.ML_TIMEOUT_MS ?? 700);
 
 mkdirSync(UPLOADS_DIR, { recursive: true });
 
@@ -58,6 +61,23 @@ function parseLanguages(value: unknown): string[] {
   return [];
 }
 
+function parseStoredLanguages(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map(asString).filter(Boolean);
+  }
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      if (Array.isArray(parsed)) {
+        return parsed.map(asString).filter(Boolean);
+      }
+    } catch {
+      return parseLanguages(value);
+    }
+  }
+  return [];
+}
+
 function imageExtension(fileName: string, mimeType: string): string {
   const lowerName = fileName.toLowerCase();
   if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) {
@@ -85,6 +105,20 @@ function imageExtension(fileName: string, mimeType: string): string {
     return ".gif";
   }
   return ".jpg";
+}
+
+function validateImageFile(file: File, fieldName: string): string | null {
+  if (file.size <= 0) {
+    return `Fichier ${fieldName} vide.`;
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return "Image trop lourde (max 5 MB).";
+  }
+  const mimeType = file.type.toLowerCase();
+  if (!ALLOWED_IMAGE_TYPES.has(mimeType)) {
+    return "Format invalide. Utilisez JPG, PNG, WEBP ou GIF.";
+  }
+  return null;
 }
 
 function computePerformerCompletion(input: {
@@ -195,7 +229,25 @@ function getPerformerProfile(userId: string) {
   const row = db
     .query(
       `
-      SELECT user_id, stage_name, city, bio, specialty, languages_json, photo_url, completion_score, created_at, updated_at
+      SELECT
+        user_id,
+        stage_name,
+        city,
+        bio,
+        specialty,
+        phone,
+        height_cm,
+        weight_kg,
+        neck_circumference_cm,
+        pant_length_cm,
+        head_circumference_cm,
+        chest_circumference_cm,
+        shoe_size,
+        languages_json,
+        photo_url,
+        completion_score,
+        created_at,
+        updated_at
       FROM performer_profiles
       WHERE user_id = ?
       `,
@@ -207,6 +259,14 @@ function getPerformerProfile(userId: string) {
         city: string;
         bio: string;
         specialty: string;
+        phone: string;
+        height_cm: string;
+        weight_kg: string;
+        neck_circumference_cm: string;
+        pant_length_cm: string;
+        head_circumference_cm: string;
+        chest_circumference_cm: string;
+        shoe_size: string;
         languages_json: string;
         photo_url: string;
         completion_score: number;
@@ -222,6 +282,21 @@ function getPerformerProfile(userId: string) {
     ...row,
     languages: JSON.parse(row.languages_json || "[]") as string[],
   };
+}
+
+function getPerformerGallery(userId: string): string[] {
+  const rows = db
+    .query(
+      `
+      SELECT image_url
+      FROM performer_gallery_images
+      WHERE performer_user_id = ?
+      ORDER BY created_at DESC
+      `,
+    )
+    .all(userId) as Array<{ image_url: string }>;
+
+  return rows.map((row) => row.image_url);
 }
 
 function getRecruiterProfile(userId: string) {
@@ -254,6 +329,198 @@ function canTransitionApplicationStatus(from: string, to: string): boolean {
     rejected: [],
   };
   return transitions[from]?.includes(to) ?? false;
+}
+
+type MlScoreResult = {
+  ml_score: number;
+  model_version: string;
+  feature_contributions: Record<string, number>;
+};
+
+function clampScore(value: number): number {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function blendScore(ruleScore: number, mlScore?: number): number {
+  if (mlScore === undefined) {
+    return clampScore(ruleScore);
+  }
+  return clampScore(ruleScore * 0.6 + mlScore * 0.4);
+}
+
+function asFiniteNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+function asNumberRecord(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object") {
+    return {};
+  }
+  const entries = Object.entries(value as Record<string, unknown>)
+    .map(([key, current]) => [key, asFiniteNumber(current)] as const)
+    .filter(([, current]) => current !== null)
+    .map(([key, current]) => [key, current as number] as const);
+  return Object.fromEntries(entries);
+}
+
+function insertMatchImpression(input: {
+  offer_id: string;
+  recruiter_user_id: string;
+  performer_user_id: string;
+  source: string;
+  rule_score: number;
+  ml_score?: number;
+  final_score: number;
+  model_version?: string;
+}): string {
+  const impressionId = crypto.randomUUID();
+  db.query(
+    `
+    INSERT INTO match_impressions (
+      id, offer_id, recruiter_user_id, performer_user_id, source, rule_score, ml_score, final_score, model_version, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+  ).run(
+    impressionId,
+    input.offer_id,
+    input.recruiter_user_id,
+    input.performer_user_id,
+    input.source,
+    input.rule_score,
+    input.ml_score ?? null,
+    input.final_score,
+    input.model_version ?? "",
+    nowIso(),
+  );
+  return impressionId;
+}
+
+function insertMatchAction(input: {
+  impression_id?: string;
+  offer_id: string;
+  recruiter_user_id: string;
+  performer_user_id: string;
+  action: "viewed" | "in_review" | "shortlisted" | "rejected" | "selected";
+}): string {
+  const actionId = crypto.randomUUID();
+  db.query(
+    `
+    INSERT INTO match_actions (
+      id, impression_id, offer_id, recruiter_user_id, performer_user_id, action, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `,
+  ).run(
+    actionId,
+    input.impression_id ?? null,
+    input.offer_id,
+    input.recruiter_user_id,
+    input.performer_user_id,
+    input.action,
+    nowIso(),
+  );
+  return actionId;
+}
+
+async function requestMlScore(
+  offerId: string,
+  performerUserId: string,
+  ruleScore: number,
+  features: Record<string, number>,
+): Promise<MlScoreResult | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ML_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${ML_SERVICE_URL}/score`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        rule_score: ruleScore,
+        features,
+        context: {
+          offer_id: offerId,
+          performer_user_id: performerUserId,
+        },
+      }),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const payload = (await response.json()) as {
+      ml_score?: unknown;
+      model_version?: unknown;
+      feature_contributions?: unknown;
+    };
+    const rawScore = asFiniteNumber(payload.ml_score);
+    if (rawScore === null) {
+      return null;
+    }
+    const modelVersion =
+      typeof payload.model_version === "string" && payload.model_version.trim()
+        ? payload.model_version
+        : "unknown";
+
+    return {
+      ml_score: clampScore(rawScore),
+      model_version: modelVersion,
+      feature_contributions: asNumberRecord(payload.feature_contributions),
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function getOfferForMatch(offerId: string) {
+  return db
+    .query(
+      `
+      SELECT id, recruiter_user_id, title, project_type, description, city, deadline_at, status
+      FROM offers
+      WHERE id = ?
+      `,
+    )
+    .get(offerId) as
+    | {
+        id: string;
+        recruiter_user_id: string;
+        title: string;
+        project_type: string;
+        description: string;
+        city: string;
+        deadline_at: string;
+        status: string;
+      }
+    | null;
+}
+
+function getPerformerForMatch(performerUserId: string): MatchPerformer | null {
+  const profile = getPerformerProfile(performerUserId);
+  if (!profile) {
+    return null;
+  }
+  return {
+    user_id: profile.user_id,
+    stage_name: profile.stage_name,
+    city: profile.city,
+    bio: profile.bio,
+    specialty: profile.specialty,
+    languages: profile.languages ?? [],
+    completion_score: profile.completion_score ?? 0,
+  };
 }
 
 const port = Number(process.env.API_PORT ?? 3001);
@@ -306,18 +573,12 @@ Bun.serve({
         if (!(photo instanceof File)) {
           return error("Champ requis: photo.");
         }
-        if (photo.size <= 0) {
-          return error("Fichier photo vide.");
-        }
-        if (photo.size > MAX_UPLOAD_BYTES) {
-          return error("Image trop lourde (max 5 MB).");
-        }
-        const mimeType = photo.type.toLowerCase();
-        if (!ALLOWED_IMAGE_TYPES.has(mimeType)) {
-          return error("Format invalide. Utilisez JPG, PNG, WEBP ou GIF.");
+        const photoError = validateImageFile(photo, "photo");
+        if (photoError) {
+          return error(photoError);
         }
 
-        const extension = imageExtension(photo.name, mimeType);
+        const extension = imageExtension(photo.name, photo.type.toLowerCase());
         const fileName = `${auth.id}-${Date.now()}-${crypto.randomUUID()}${extension}`;
         const filePath = join(UPLOADS_DIR, fileName);
         await Bun.write(filePath, photo);
@@ -351,6 +612,72 @@ Bun.serve({
         return json({
           photo_url: photoUrl,
           profile: getPerformerProfile(auth.id),
+        });
+      }
+
+      if (method === "POST" && pathname === "/uploads/performer-gallery") {
+        const auth = requireAuth(req, ["performer"]);
+        if (auth instanceof Response) {
+          return auth;
+        }
+
+        let formData: FormData;
+        try {
+          formData = await req.formData();
+        } catch {
+          return error("Body multipart/form-data invalide.");
+        }
+
+        const files = formData
+          .getAll("photos")
+          .filter((entry): entry is File => entry instanceof File);
+        if (files.length === 0) {
+          return error("Champ requis: photos.");
+        }
+        if (files.length > 12) {
+          return error("Maximum 12 images par import.");
+        }
+
+        const currentCountRow = db
+          .query(
+            `
+            SELECT COUNT(*) AS count
+            FROM performer_gallery_images
+            WHERE performer_user_id = ?
+            `,
+          )
+          .get(auth.id) as { count: number } | null;
+        const currentCount = currentCountRow?.count ?? 0;
+        if (currentCount + files.length > 20) {
+          return error("La galerie est limitée à 20 images.");
+        }
+
+        const uploadedUrls: string[] = [];
+        const createdAt = nowIso();
+        for (const photo of files) {
+          const photoError = validateImageFile(photo, "photo");
+          if (photoError) {
+            return error(photoError);
+          }
+
+          const extension = imageExtension(photo.name, photo.type.toLowerCase());
+          const fileName = `${auth.id}-gallery-${Date.now()}-${crypto.randomUUID()}${extension}`;
+          const filePath = join(UPLOADS_DIR, fileName);
+          await Bun.write(filePath, photo);
+
+          const imageUrl = `${url.origin}/uploads/${fileName}`;
+          db.query(
+            `
+            INSERT INTO performer_gallery_images (id, performer_user_id, image_url, created_at)
+            VALUES (?, ?, ?, ?)
+            `,
+          ).run(crypto.randomUUID(), auth.id, imageUrl, createdAt);
+          uploadedUrls.push(imageUrl);
+        }
+
+        return json({
+          uploaded_urls: uploadedUrls,
+          gallery_urls: getPerformerGallery(auth.id),
         });
       }
 
@@ -511,6 +838,14 @@ Bun.serve({
           city?: string;
           bio?: string;
           specialty?: string;
+          phone?: string;
+          height_cm?: string;
+          weight_kg?: string;
+          neck_circumference_cm?: string;
+          pant_length_cm?: string;
+          head_circumference_cm?: string;
+          chest_circumference_cm?: string;
+          shoe_size?: string;
           photo_url?: string;
           languages?: string[] | string;
         }>(req);
@@ -529,6 +864,26 @@ Bun.serve({
           city: body.city !== undefined ? asString(body.city) : current.city,
           bio: body.bio !== undefined ? asString(body.bio) : current.bio,
           specialty: body.specialty !== undefined ? asString(body.specialty) : current.specialty,
+          phone: body.phone !== undefined ? asString(body.phone) : current.phone,
+          height_cm: body.height_cm !== undefined ? asString(body.height_cm) : current.height_cm,
+          weight_kg: body.weight_kg !== undefined ? asString(body.weight_kg) : current.weight_kg,
+          neck_circumference_cm:
+            body.neck_circumference_cm !== undefined
+              ? asString(body.neck_circumference_cm)
+              : current.neck_circumference_cm,
+          pant_length_cm:
+            body.pant_length_cm !== undefined
+              ? asString(body.pant_length_cm)
+              : current.pant_length_cm,
+          head_circumference_cm:
+            body.head_circumference_cm !== undefined
+              ? asString(body.head_circumference_cm)
+              : current.head_circumference_cm,
+          chest_circumference_cm:
+            body.chest_circumference_cm !== undefined
+              ? asString(body.chest_circumference_cm)
+              : current.chest_circumference_cm,
+          shoe_size: body.shoe_size !== undefined ? asString(body.shoe_size) : current.shoe_size,
           photo_url: body.photo_url !== undefined ? asString(body.photo_url) : current.photo_url,
           languages:
             body.languages !== undefined
@@ -542,7 +897,23 @@ Bun.serve({
         db.query(
           `
           UPDATE performer_profiles
-          SET stage_name = ?, city = ?, bio = ?, specialty = ?, photo_url = ?, languages_json = ?, completion_score = ?, updated_at = ?
+          SET
+            stage_name = ?,
+            city = ?,
+            bio = ?,
+            specialty = ?,
+            phone = ?,
+            height_cm = ?,
+            weight_kg = ?,
+            neck_circumference_cm = ?,
+            pant_length_cm = ?,
+            head_circumference_cm = ?,
+            chest_circumference_cm = ?,
+            shoe_size = ?,
+            photo_url = ?,
+            languages_json = ?,
+            completion_score = ?,
+            updated_at = ?
           WHERE user_id = ?
           `,
         ).run(
@@ -550,6 +921,14 @@ Bun.serve({
           merged.city,
           merged.bio,
           merged.specialty,
+          merged.phone,
+          merged.height_cm,
+          merged.weight_kg,
+          merged.neck_circumference_cm,
+          merged.pant_length_cm,
+          merged.head_circumference_cm,
+          merged.chest_circumference_cm,
+          merged.shoe_size,
           merged.photo_url,
           JSON.stringify(merged.languages),
           completion,
@@ -575,6 +954,14 @@ Bun.serve({
             city: profile.city,
             bio: profile.bio,
             specialty: profile.specialty,
+            phone: profile.phone,
+            height_cm: profile.height_cm,
+            weight_kg: profile.weight_kg,
+            neck_circumference_cm: profile.neck_circumference_cm,
+            pant_length_cm: profile.pant_length_cm,
+            head_circumference_cm: profile.head_circumference_cm,
+            chest_circumference_cm: profile.chest_circumference_cm,
+            shoe_size: profile.shoe_size,
             photo_url: profile.photo_url,
             languages: profile.languages,
             completion_score: profile.completion_score,
@@ -916,15 +1303,15 @@ Bun.serve({
           return auth;
         }
         const offerId = offerApplicationsMatch[1]!;
-        const offer = db
-          .query("SELECT id, recruiter_user_id FROM offers WHERE id = ?")
-          .get(offerId) as { id: string; recruiter_user_id: string } | null;
+        const offer = getOfferForMatch(offerId);
         if (!offer) {
           return error("Offre introuvable.", 404);
         }
         if (offer.recruiter_user_id !== auth.id) {
           return error("Accès interdit.", 403);
         }
+        const sort = asString(url.searchParams.get("sort")).toLowerCase();
+        const trackMatch = url.searchParams.get("track_match") !== "0";
 
         const applications = db
           .query(
@@ -940,7 +1327,9 @@ Bun.serve({
               p.stage_name,
               p.city,
               p.specialty,
-              p.completion_score
+              p.completion_score,
+              p.bio,
+              p.languages_json
             FROM applications a
             LEFT JOIN performer_profiles p ON p.user_id = a.performer_user_id
             WHERE a.offer_id = ?
@@ -948,6 +1337,85 @@ Bun.serve({
             `,
           )
           .all(offerId) as Array<Record<string, unknown>>;
+
+        if (sort === "match") {
+          const offerForMatch: MatchOffer = {
+            id: offer.id,
+            title: offer.title,
+            project_type: offer.project_type,
+            description: offer.description,
+            city: offer.city,
+            deadline_at: offer.deadline_at,
+          };
+
+          const scored = await Promise.all(
+            applications.map(async (app) => {
+              const performer: MatchPerformer = {
+                user_id: asString(app.performer_user_id),
+                stage_name: asString(app.stage_name),
+                city: asString(app.city),
+                bio: asString(app.bio),
+                specialty: asString(app.specialty),
+                languages: parseStoredLanguages(app.languages_json),
+                completion_score: clampScore(asFiniteNumber(app.completion_score) ?? 0),
+              };
+              const rule = computeRuleMatch(offerForMatch, performer);
+              const features = buildMlFeatures(offerForMatch, performer, rule);
+              const ml = await requestMlScore(
+                offerForMatch.id,
+                performer.user_id,
+                rule.rule_score,
+                features,
+              );
+              const finalScore = blendScore(rule.rule_score, ml?.ml_score);
+
+              let impressionId: string | null = null;
+              if (trackMatch) {
+                impressionId = insertMatchImpression({
+                  offer_id: offerForMatch.id,
+                  recruiter_user_id: auth.id,
+                  performer_user_id: performer.user_id,
+                  source: "applications_list",
+                  rule_score: rule.rule_score,
+                  ml_score: ml?.ml_score,
+                  final_score: finalScore,
+                  model_version: ml?.model_version,
+                });
+              }
+
+              return {
+                ...app,
+                match_score: finalScore,
+                match_rule_score: rule.rule_score,
+                match_ml_score: ml?.ml_score ?? null,
+                match_breakdown: rule.breakdown,
+                match_reasons: rule.reasons,
+                ml_model_version: ml?.model_version ?? null,
+                ml_feature_contributions: ml?.feature_contributions ?? {},
+                match_impression_id: impressionId,
+              };
+            }),
+          );
+
+          scored.sort((a, b) => {
+            const delta =
+              (asFiniteNumber(b.match_score) ?? 0) - (asFiniteNumber(a.match_score) ?? 0);
+            if (delta !== 0) {
+              return delta;
+            }
+            const aCreated = Date.parse(asString((a as Record<string, unknown>).created_at));
+            const bCreated = Date.parse(asString((b as Record<string, unknown>).created_at));
+            return bCreated - aCreated;
+          });
+
+          return json({
+            applications: scored,
+            ranking: {
+              mode: "match",
+              tracked: trackMatch,
+            },
+          });
+        }
 
         return json({ applications });
       }
@@ -1071,7 +1539,7 @@ Bun.serve({
         const application = db
           .query(
             `
-            SELECT a.id, a.status, o.recruiter_user_id
+            SELECT a.id, a.status, a.offer_id, a.performer_user_id, o.recruiter_user_id
             FROM applications a
             JOIN offers o ON o.id = a.offer_id
             WHERE a.id = ?
@@ -1081,6 +1549,8 @@ Bun.serve({
           | {
               id: string;
               status: string;
+              offer_id: string;
+              performer_user_id: string;
               recruiter_user_id: string;
             }
           | null;
@@ -1099,6 +1569,12 @@ Bun.serve({
           nowIso(),
           applicationId,
         );
+        insertMatchAction({
+          offer_id: application.offer_id,
+          recruiter_user_id: auth.id,
+          performer_user_id: application.performer_user_id,
+          action: nextStatus as "in_review" | "shortlisted" | "rejected" | "selected",
+        });
         return json({ message: "Statut mis à jour." });
       }
 
@@ -1195,6 +1671,131 @@ Bun.serve({
         }
 
         return json({ message: "Action appliquée." });
+      }
+
+      if (method === "GET" && pathname === "/ai/match-score") {
+        const auth = requireAuth(req, ["recruiter", "admin"]);
+        if (auth instanceof Response) {
+          return auth;
+        }
+        const performerId = asString(url.searchParams.get("performer_id"));
+        const offerId = asString(url.searchParams.get("offer_id"));
+        if (!performerId || !offerId) {
+          return error("Query params requis: performer_id, offer_id.");
+        }
+
+        const offer = getOfferForMatch(offerId);
+        if (!offer) {
+          return error("Offre introuvable.", 404);
+        }
+        if (auth.role === "recruiter" && offer.recruiter_user_id !== auth.id) {
+          return error("Accès interdit.", 403);
+        }
+
+        const performer = getPerformerForMatch(performerId);
+        if (!performer) {
+          return error("Profil performeur introuvable.", 404);
+        }
+
+        const offerForMatch: MatchOffer = {
+          id: offer.id,
+          title: offer.title,
+          project_type: offer.project_type,
+          description: offer.description,
+          city: offer.city,
+          deadline_at: offer.deadline_at,
+        };
+
+        const rule = computeRuleMatch(offerForMatch, performer);
+        const features = buildMlFeatures(offerForMatch, performer, rule);
+        const ml = await requestMlScore(offer.id, performer.user_id, rule.rule_score, features);
+        const finalScore = blendScore(rule.rule_score, ml?.ml_score);
+
+        const shouldTrack = url.searchParams.get("track") !== "0";
+        const impressionId = shouldTrack
+          ? insertMatchImpression({
+              offer_id: offer.id,
+              recruiter_user_id: offer.recruiter_user_id,
+              performer_user_id: performer.user_id,
+              source: asString(url.searchParams.get("source")) || "match_score_endpoint",
+              rule_score: rule.rule_score,
+              ml_score: ml?.ml_score,
+              final_score: finalScore,
+              model_version: ml?.model_version,
+            })
+          : null;
+
+        return json({
+          match: {
+            offer_id: offer.id,
+            performer_user_id: performer.user_id,
+            score: finalScore,
+            rule_score: rule.rule_score,
+            ml_score: ml?.ml_score ?? null,
+            model_version: ml?.model_version ?? null,
+            reasons: rule.reasons,
+            breakdown: rule.breakdown,
+            features,
+            ml_feature_contributions: ml?.feature_contributions ?? {},
+            impression_id: impressionId,
+          },
+          ml_available: Boolean(ml),
+        });
+      }
+
+      if (method === "POST" && pathname === "/ai/match-action") {
+        const auth = requireAuth(req, ["recruiter", "admin"]);
+        if (auth instanceof Response) {
+          return auth;
+        }
+        const body = await readJson<{
+          impression_id?: string;
+          offer_id?: string;
+          performer_user_id?: string;
+          action?: string;
+        }>(req);
+        if (!body) {
+          return error("Body JSON invalide.");
+        }
+
+        const offerId = asString(body.offer_id);
+        const performerUserId = asString(body.performer_user_id);
+        const action = asString(body.action) as
+          | "viewed"
+          | "in_review"
+          | "shortlisted"
+          | "rejected"
+          | "selected";
+        const impressionId = asString(body.impression_id);
+        const allowedActions = ["viewed", "in_review", "shortlisted", "rejected", "selected"];
+
+        if (!offerId || !performerUserId || !action) {
+          return error("Champs requis: offer_id, performer_user_id, action.");
+        }
+        if (!allowedActions.includes(action)) {
+          return error("Action de matching invalide.");
+        }
+
+        const offer = getOfferForMatch(offerId);
+        if (!offer) {
+          return error("Offre introuvable.", 404);
+        }
+        if (auth.role === "recruiter" && offer.recruiter_user_id !== auth.id) {
+          return error("Accès interdit.", 403);
+        }
+        const performer = getPerformerForMatch(performerUserId);
+        if (!performer) {
+          return error("Profil performeur introuvable.", 404);
+        }
+
+        const actionId = insertMatchAction({
+          impression_id: impressionId || undefined,
+          offer_id: offerId,
+          recruiter_user_id: auth.role === "admin" ? offer.recruiter_user_id : auth.id,
+          performer_user_id: performer.user_id,
+          action,
+        });
+        return json({ action_id: actionId }, 201);
       }
 
       if (method === "POST" && pathname === "/ai/suggest-profile-bio") {
