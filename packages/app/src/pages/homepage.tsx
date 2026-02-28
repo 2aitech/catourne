@@ -1,252 +1,399 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/auth-context";
+import { useLang } from "../lib/lang-context";
 import { request, formatDate } from "../lib/api";
 import type { Offer } from "../lib/types";
-import { Button, Card, Badge, PageContainer } from "../components/ui";
+import { Button, Badge, PageContainer } from "../components/ui";
 
 export function HomePage() {
   const { user } = useAuth();
+  const { t } = useLang();
+  const h = t.home;
   const [recentOffers, setRecentOffers] = useState<Offer[]>([]);
 
   useEffect(() => {
     request<{ offers: Offer[] }>("/offers")
-      .then((data) => setRecentOffers((data.offers ?? []).slice(0, 4)))
+      .then((data) => setRecentOffers((data.offers ?? []).slice(0, 6)))
       .catch(() => {});
   }, []);
 
   return (
     <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden min-h-[85vh] flex items-center">
-        {/* Dramatic ambient lighting */}
-        <div className="absolute inset-0 bg-noir-950" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_20%_40%,rgba(212,168,83,0.08),transparent)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_80%_80%,rgba(178,37,72,0.06),transparent)]" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold-700/40 to-transparent" />
+      {/* ═══════════ SECTION 1: HERO ═══════════ */}
+      <section className="relative min-h-[92vh] flex items-center overflow-hidden">
+        {/* Background image — Ouarzazate cinematic landscape */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1548018560-c7196e91a0d5?w=1920&q=80')`,
+          }}
+        />
+        {/* Cinematic gradient overlay */}
+        <div className="hero-overlay absolute inset-0" />
+        {/* Vignette */}
+        <div className="vignette absolute inset-0" />
+        {/* Warm gold ambient light */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_30%_70%,rgba(194,142,76,0.12),transparent)]" />
 
-        {/* Geometric Moroccan-inspired decorative element */}
-        <div className="absolute top-20 right-10 lg:right-20 w-64 h-64 opacity-[0.04] pointer-events-none">
-          <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M100 0L200 100L100 200L0 100Z" stroke="currentColor" strokeWidth="0.5" className="text-gold-400" />
-            <path d="M100 20L180 100L100 180L20 100Z" stroke="currentColor" strokeWidth="0.5" className="text-gold-400" />
-            <path d="M100 40L160 100L100 160L40 100Z" stroke="currentColor" strokeWidth="0.5" className="text-gold-400" />
-            <circle cx="100" cy="100" r="50" stroke="currentColor" strokeWidth="0.5" className="text-gold-400" />
-            <circle cx="100" cy="100" r="70" stroke="currentColor" strokeWidth="0.5" className="text-gold-400" />
-          </svg>
-        </div>
+        <PageContainer className="relative z-10 py-24">
+          <div className="max-w-3xl animate-page-enter">
+            {/* Label */}
+            <div className="flex items-center gap-3 mb-8">
+              <span className="w-8 h-px bg-gold-500" />
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-400">
+                {h.heroLabel}
+              </p>
+            </div>
 
-        <PageContainer className="relative animate-page-enter py-20">
-          <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-500 mb-6">
-              Plateforme de casting
-            </p>
-            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-cream-100 leading-[1.05] tracking-tight">
-              Le talent rencontre
+            {/* Heading */}
+            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-cream-50 leading-[1.05] tracking-tight">
+              {h.heroHeading}
               <br />
-              <span className="text-gold-500 italic">l'opportunite</span>
+              <span className="text-gradient-gold">{h.heroHeadingAccent}</span>
             </h1>
-            <p className="mt-8 text-lg text-cream-400 max-w-xl leading-relaxed">
-              Connectez performeurs talentueux et producteurs ambitieux. La reference du casting au Maroc.
+
+            {/* Description */}
+            <p className="mt-8 text-lg sm:text-xl text-cream-300 max-w-2xl leading-relaxed">
+              {h.heroDesc}
             </p>
+
+            {/* Buttons */}
             <div className="mt-12 flex flex-wrap gap-4">
               {user ? (
                 <Link to={user.role === "recruiter" ? "/recruiter/dashboard" : "/offers"}>
                   <Button size="lg">
-                    {user.role === "recruiter" ? "Mon tableau de bord" : "Parcourir les offres"}
+                    {user.role === "recruiter" ? h.heroDashboard : h.heroBrowse}
                   </Button>
                 </Link>
               ) : (
                 <>
                   <Link to="/register?role=performer">
-                    <Button size="lg">
-                      Je suis performeur
-                    </Button>
+                    <Button size="lg">{h.heroBtnTalent}</Button>
                   </Link>
                   <Link to="/register?role=recruiter">
-                    <Button size="lg" variant="outline">
-                      Je suis recruteur
-                    </Button>
+                    <Button size="lg" variant="outline">{h.heroBtnRecruiter}</Button>
                   </Link>
                 </>
               )}
             </div>
           </div>
         </PageContainer>
+
+        {/* Bottom fade line */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold-600/30 to-transparent" />
       </section>
 
-      {/* How it works */}
-      <section className="py-24 relative">
-        <div className="absolute inset-0 bg-noir-900/50" />
-        <PageContainer className="relative">
-          <div className="text-center mb-16 animate-page-enter">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600 mb-4">Comment ca fonctionne</p>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-cream-100">
-              Simple. Efficace. <span className="italic text-gold-400">Elegant.</span>
+      {/* ═══════════ SECTION 2: SEARCH FILTERS ═══════════ */}
+      <section className="relative -mt-16 z-20 pb-16">
+        <PageContainer>
+          <div className="bg-noir-800 border border-noir-700/60 rounded-lg p-6 sm:p-8 shadow-2xl shadow-noir-950/50">
+            <h2 className="font-display text-lg font-semibold text-cream-100 mb-6">
+              {h.filtersTitle}
             </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-16 max-w-5xl mx-auto stagger-children">
-            {/* Performer steps */}
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-500 mb-8 flex items-center gap-3">
-                <span className="w-6 h-px bg-gold-600" />
-                Pour les performeurs
-              </h3>
-              <div className="space-y-8">
-                <Step number={1} title="Creez votre profil" desc="Renseignez votre specialite, ville, langues et ajoutez une bio percutante." />
-                <Step number={2} title="Decouvrez les offres" desc="Parcourez les castings publies par les recruteurs et filtrez par ville ou type de projet." />
-                <Step number={3} title="Postulez en un clic" desc="Envoyez votre candidature avec un message de motivation et suivez son avancement." />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Keyword */}
+              <div>
+                <label className="block text-xs font-medium uppercase tracking-widest text-cream-400 mb-2">
+                  {h.filtersKeyword}
+                </label>
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder={h.filtersKeywordPlaceholder}
+                    className="w-full bg-noir-900 border border-noir-600 pl-10 pr-4 py-3 text-sm text-cream-100 placeholder:text-noir-400 focus:border-gold-600 focus:outline-none focus:ring-1 focus:ring-gold-600/30 transition-colors rounded-md"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Recruiter steps */}
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-cream-400 mb-8 flex items-center gap-3">
-                <span className="w-6 h-px bg-cream-500" />
-                Pour les recruteurs
-              </h3>
-              <div className="space-y-8">
-                <Step number={1} title="Publiez votre offre" desc="Decrivez le role, le type de projet, la ville et la date limite de candidature." />
-                <Step number={2} title="Recevez des candidatures" desc="Les performeurs interessés postulent directement. Gerez tout depuis votre tableau de bord." />
-                <Step number={3} title="Selectionnez vos talents" desc="Passez en revue les profils, shortlistez et selectionnez les meilleurs candidats." />
+              {/* Location */}
+              <div>
+                <label className="block text-xs font-medium uppercase tracking-widest text-cream-400 mb-2">
+                  {h.filtersLocation}
+                </label>
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder={h.filtersLocationPlaceholder}
+                    className="w-full bg-noir-900 border border-noir-600 pl-10 pr-4 py-3 text-sm text-cream-100 placeholder:text-noir-400 focus:border-gold-600 focus:outline-none focus:ring-1 focus:ring-gold-600/30 transition-colors rounded-md"
+                  />
+                </div>
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-xs font-medium uppercase tracking-widest text-cream-400 mb-2">
+                  {h.filtersCategory}
+                </label>
+                <select className="w-full bg-noir-900 border border-noir-600 px-4 py-3 text-sm text-cream-100 focus:border-gold-600 focus:outline-none focus:ring-1 focus:ring-gold-600/30 transition-colors rounded-md appearance-none">
+                  <option>{h.filtersCategoryAll}</option>
+                  <option>{h.filtersCategoryActor}</option>
+                  <option>{h.filtersCategoryExtra}</option>
+                  <option>{h.filtersCategoryTech}</option>
+                  <option>{h.filtersCategoryModel}</option>
+                  <option>{h.filtersCategoryVoice}</option>
+                </select>
+              </div>
+
+              {/* Search button */}
+              <div className="flex items-end">
+                <Link to="/offers" className="w-full">
+                  <Button size="lg" className="w-full rounded-md">
+                    <svg className="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                    {h.filtersSearch}
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
         </PageContainer>
       </section>
 
-      {/* Recent Offers */}
-      {recentOffers.length > 0 && (
-        <section className="py-24">
-          <PageContainer>
-            <div className="flex items-end justify-between mb-12">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-600 mb-4">Dernieres opportunites</p>
-                <h2 className="font-display text-3xl sm:text-4xl font-bold text-cream-100">
-                  Offres recentes
-                </h2>
+      {/* ═══════════ SECTION 3: CASTING GRID ═══════════ */}
+      <section className="py-20">
+        <PageContainer>
+          <div className="flex items-end justify-between mb-12 animate-page-enter">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="w-6 h-px bg-gold-600" />
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-500">{h.gridLabel}</p>
               </div>
-              <Link to="/offers">
-                <Button variant="outline" size="sm">Voir tout</Button>
-              </Link>
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-cream-100">
+                {h.gridHeading}
+              </h2>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger-children">
-              {recentOffers.map((offer) => (
+            <Link to="/offers" className="hidden sm:block">
+              <Button variant="outline" size="sm">{h.gridViewAll}</Button>
+            </Link>
+          </div>
+
+          {/* Offer cards grid */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger-children">
+            {recentOffers.length > 0 ? (
+              recentOffers.map((offer) => (
                 <Link key={offer.id} to={`/offers/${offer.id}`}>
-                  <Card className="p-5 hover:border-gold-700/50 transition-all duration-300 h-full group">
-                    <Badge color="primary" className="mb-4">{offer.project_type}</Badge>
-                    <h3 className="font-display font-semibold text-cream-100 mb-3 line-clamp-2 group-hover:text-gold-400 transition-colors duration-200">{offer.title}</h3>
-                    <div className="flex items-center gap-1.5 text-xs text-cream-500 mb-2">
-                      <svg className="w-3.5 h-3.5 text-gold-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <div className="group bg-noir-800/60 border border-noir-700 rounded-lg p-6 hover:border-gold-600/40 transition-all duration-300 h-full flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                      <Badge color="primary">{offer.project_type}</Badge>
+                      <span className="text-xs text-cream-500/60">
+                        {h.gridDeadline} {formatDate(offer.deadline_at)}
+                      </span>
+                    </div>
+                    <h3 className="font-display font-semibold text-cream-100 text-lg mb-3 line-clamp-2 group-hover:text-gold-400 transition-colors duration-200">
+                      {offer.title}
+                    </h3>
+                    <div className="flex items-center gap-1.5 text-sm text-cream-400 mb-4">
+                      <svg className="w-4 h-4 text-gold-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z" />
                       </svg>
                       {offer.city}
                     </div>
-                    <p className="text-xs text-cream-500/60">
-                      Limite: {formatDate(offer.deadline_at)}
-                    </p>
-                  </Card>
+                    {offer.description && (
+                      <p className="text-sm text-cream-500 leading-relaxed line-clamp-2 mb-4 flex-grow">
+                        {offer.description}
+                      </p>
+                    )}
+                    <div className="mt-auto pt-4 border-t border-noir-700/60">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-gold-500 group-hover:text-gold-400 transition-colors">
+                        {h.gridApply} &rarr;
+                      </span>
+                    </div>
+                  </div>
                 </Link>
-              ))}
-            </div>
-          </PageContainer>
-        </section>
-      )}
-
-      {/* Value props */}
-      <section className="py-24 relative">
-        <div className="absolute inset-0 bg-noir-900/50" />
-        <PageContainer className="relative">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-cream-100">
-              Pourquoi <span className="text-gold-500 italic">CastingMaroc</span> ?
-            </h2>
+              ))
+            ) : (
+              /* Placeholder cards when no data */
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="bg-noir-800/40 border border-noir-700/40 rounded-lg p-6 h-52 flex flex-col justify-between">
+                  <div>
+                    <div className="w-20 h-5 bg-noir-700/60 rounded mb-4" />
+                    <div className="w-full h-5 bg-noir-700/40 rounded mb-2" />
+                    <div className="w-3/4 h-5 bg-noir-700/30 rounded" />
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-cream-500/40">
+                    <div className="w-3 h-3 rounded-full bg-noir-600/50" />
+                    Ouarzazate
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-          <div className="grid sm:grid-cols-3 gap-8 max-w-4xl mx-auto stagger-children">
-            <ValueProp
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              }
-              title="Confiance"
-              desc="Profils verifies et systeme de moderation pour un environnement professionnel securise."
-            />
-            <ValueProp
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              }
-              title="Visibilite"
-              desc="Maximisez vos chances d'etre vu par les bons recruteurs ou de trouver le talent ideal."
-            />
-            <ValueProp
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              }
-              title="Efficacite"
-              desc="Processus simplifie de la candidature a la selection. Gagnez du temps sur chaque projet."
-            />
+
+          {/* Mobile "view all" */}
+          <div className="sm:hidden mt-8 text-center">
+            <Link to="/offers">
+              <Button variant="outline" size="sm">{h.gridViewAll}</Button>
+            </Link>
           </div>
         </PageContainer>
       </section>
 
-      {/* CTA */}
-      {!user && (
-        <section className="py-24 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(212,168,83,0.06),transparent)]" />
-          <PageContainer className="relative text-center">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-cream-100 mb-5">
-              Pret a commencer ?
+      {/* ═══════════ SECTION 4: HOW IT WORKS (4 steps) ═══════════ */}
+      <section className="py-24 relative">
+        <div className="absolute inset-0 bg-noir-900/60" />
+        <PageContainer className="relative">
+          <div className="text-center mb-16 animate-page-enter">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <span className="w-6 h-px bg-gold-600" />
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-500">{h.howLabel}</p>
+              <span className="w-6 h-px bg-gold-600" />
+            </div>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-cream-100">
+              {h.howHeading}
             </h2>
-            <p className="text-cream-400 mb-10 max-w-xl mx-auto leading-relaxed">
-              Rejoignez la communaute CastingMaroc et decouvrez de nouvelles opportunites des aujourd'hui.
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto stagger-children">
+            <StepCard number={1} title={h.step1Title} desc={h.step1Desc} icon="profile" />
+            <StepCard number={2} title={h.step2Title} desc={h.step2Desc} icon="search" />
+            <StepCard number={3} title={h.step3Title} desc={h.step3Desc} icon="apply" />
+            <StepCard number={4} title={h.step4Title} desc={h.step4Desc} icon="star" />
+          </div>
+        </PageContainer>
+      </section>
+
+      {/* ═══════════ SECTION 5: WHY DRAA-TAFILALET ═══════════ */}
+      <section className="py-24 relative overflow-hidden">
+        {/* Background atmosphere */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_60%_50%,rgba(194,142,76,0.06),transparent)]" />
+
+        <PageContainer className="relative">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left: Text */}
+            <div className="animate-page-enter">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="w-6 h-px bg-gold-600" />
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-500">{h.regionLabel}</p>
+              </div>
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-cream-100 mb-6">
+                {h.regionHeading}
+              </h2>
+              <p className="text-cream-400 leading-relaxed text-lg mb-10">
+                {h.regionDesc}
+              </p>
+
+              {/* Stats grid */}
+              <div className="grid grid-cols-2 gap-6">
+                <StatCard value={h.regionStat1} label={h.regionStat1Label} />
+                <StatCard value={h.regionStat2} label={h.regionStat2Label} />
+                <StatCard value={h.regionStat3} label={h.regionStat3Label} />
+                <StatCard value={h.regionStat4} label={h.regionStat4Label} />
+              </div>
+            </div>
+
+            {/* Right: Image */}
+            <div className="relative">
+              <div className="rounded-lg overflow-hidden border border-noir-700/40">
+                <img
+                  src="https://images.unsplash.com/photo-1489493585363-d69421e0edd3?w=800&q=80"
+                  alt="Ouarzazate - Atlas Studios"
+                  className="w-full h-[420px] object-cover"
+                  loading="lazy"
+                />
+              </div>
+              {/* Decorative frame accent */}
+              <div className="absolute -bottom-3 -right-3 w-full h-full border border-gold-600/20 rounded-lg -z-10" />
+            </div>
+          </div>
+        </PageContainer>
+      </section>
+
+      {/* ═══════════ SECTION 6: FINAL CTA ═══════════ */}
+      <section className="py-24 relative overflow-hidden">
+        {/* Cinematic ambient light */}
+        <div className="absolute inset-0 bg-noir-900/60" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_50%_50%,rgba(194,142,76,0.08),transparent)]" />
+
+        <PageContainer className="relative text-center">
+          <div className="max-w-2xl mx-auto animate-page-enter">
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-cream-100 mb-6 leading-tight">
+              {h.ctaHeading}
+            </h2>
+            <p className="text-cream-400 text-lg mb-10 leading-relaxed">
+              {h.ctaDesc}
             </p>
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link to="/register">
-                <Button size="lg">Creer un compte</Button>
+                <Button size="lg">{h.ctaRegister}</Button>
               </Link>
               <Link to="/offers">
-                <Button size="lg" variant="outline">
-                  Voir les offres
-                </Button>
+                <Button size="lg" variant="outline">{h.ctaBrowse}</Button>
               </Link>
             </div>
-          </PageContainer>
-        </section>
-      )}
+          </div>
+        </PageContainer>
+      </section>
     </div>
   );
 }
 
-function Step({ number, title, desc }: { number: number; title: string; desc: string }) {
-  return (
-    <div className="flex gap-5">
-      <div className="flex-shrink-0 w-8 h-8 border border-noir-600 text-cream-500 font-display font-semibold flex items-center justify-center text-sm">
-        {number}
-      </div>
-      <div>
-        <h4 className="font-medium text-cream-200 mb-1">{title}</h4>
-        <p className="text-sm text-cream-500 leading-relaxed">{desc}</p>
-      </div>
-    </div>
-  );
-}
-
-function ValueProp({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+/* ─── Step Card Component ─── */
+function StepCard({ number, title, desc, icon }: { number: number; title: string; desc: string; icon: string }) {
   return (
     <div className="text-center group">
-      <div className="w-12 h-12 border border-gold-700/50 text-gold-500 flex items-center justify-center mx-auto mb-5 group-hover:border-gold-500/60 group-hover:bg-gold-500/5 transition-all duration-300">
-        {icon}
+      {/* Icon container */}
+      <div className="w-16 h-16 border border-gold-600/30 rounded-lg text-gold-500 flex items-center justify-center mx-auto mb-6 group-hover:border-gold-500/60 group-hover:bg-gold-500/5 transition-all duration-300">
+        <StepIcon type={icon} />
       </div>
-      <h3 className="font-display font-semibold text-cream-100 mb-2">{title}</h3>
+      {/* Number */}
+      <span className="inline-block text-xs font-semibold text-gold-600 mb-3 tracking-widest">
+        0{number}
+      </span>
+      <h3 className="font-display font-semibold text-cream-100 mb-2 text-lg">{title}</h3>
       <p className="text-sm text-cream-500 leading-relaxed">{desc}</p>
+    </div>
+  );
+}
+
+/* ─── Step Icons ─── */
+function StepIcon({ type }: { type: string }) {
+  const cls = "w-6 h-6";
+  switch (type) {
+    case "profile":
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        </svg>
+      );
+    case "search":
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+      );
+    case "apply":
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+        </svg>
+      );
+    case "star":
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+/* ─── Stat Card Component ─── */
+function StatCard({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="border border-noir-700/60 rounded-lg p-5 bg-noir-800/40">
+      <p className="font-display font-bold text-gold-400 text-2xl mb-1">{value}</p>
+      <p className="text-xs text-cream-500 uppercase tracking-wider">{label}</p>
     </div>
   );
 }
