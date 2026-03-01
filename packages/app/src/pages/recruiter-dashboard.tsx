@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { request } from "../lib/api";
 import type { Offer } from "../lib/types";
 import { Button, Card, Badge, PageContainer, LoadingSpinner } from "../components/ui";
@@ -87,11 +87,12 @@ export function RecruiterDashboardPage() {
                 </div>
                 <div className="flex gap-2 ml-4">
                   {offer.status === "draft" && (
-                    <PublishButton offerId={offer.id} onPublished={() => {
-                      request<{ offers: Offer[] }>("/offers?mine=1")
-                        .then((data) => setOffers(data.offers ?? []))
-                        .catch(() => {});
-                    }} />
+                    <PublishButton offerId={offer.id} />
+                  )}
+                  {offer.status === "published" && (
+                    <Link to={`/recruiter/offers/${offer.id}/talents`}>
+                      <Button variant="outline" size="sm">Talents</Button>
+                    </Link>
                   )}
                   <Link to={`/recruiter/offers/${offer.id}/applications`}>
                     <Button variant="outline" size="sm">Candidatures</Button>
@@ -106,13 +107,14 @@ export function RecruiterDashboardPage() {
   );
 }
 
-function PublishButton({ offerId, onPublished }: { offerId: string; onPublished: () => void }) {
+function PublishButton({ offerId }: { offerId: string }) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const handlePublish = async () => {
     setLoading(true);
     try {
       await request(`/offers/${offerId}/publish`, { method: "POST" });
-      onPublished();
+      navigate(`/recruiter/offers/${offerId}/talents`);
     } catch {
     } finally {
       setLoading(false);

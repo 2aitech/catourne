@@ -1453,6 +1453,150 @@ Bun.serve({
         return json({ applications });
       }
 
+      const offerTalentsMatch = pathname.match(/^\/offers\/([^/]+)\/talents$/);
+      if (offerTalentsMatch && method === "GET") {
+        const auth = requireAuth(req, ["recruiter"]);
+        if (auth instanceof Response) {
+          return auth;
+        }
+        const offerId = offerTalentsMatch[1]!;
+        const offer = getOfferForMatch(offerId);
+        if (!offer) {
+          return error("Offre introuvable.", 404);
+        }
+        if (offer.recruiter_user_id !== auth.id) {
+          return error("Accès interdit.", 403);
+        }
+
+        const parsedLimit = asFiniteNumber(url.searchParams.get("limit"));
+        const limit =
+          parsedLimit === null ? 50 : Math.max(1, Math.min(200, Math.round(parsedLimit)));
+        const trackMatch = url.searchParams.get("track_match") !== "0";
+
+        const talents = db
+          .query(
+            `
+            SELECT
+              pp.user_id,
+              pp.stage_name,
+              pp.city,
+              pp.specialty,
+              pp.phone,
+              pp.photo_url,
+              pp.bio,
+              pp.languages_json,
+              pp.completion_score,
+              a.id AS application_id,
+              a.status AS application_status
+            FROM performer_profiles pp
+            JOIN users u ON u.id = pp.user_id
+            LEFT JOIN applications a
+              ON a.offer_id = ? AND a.performer_user_id = pp.user_id
+            WHERE u.is_suspended = 0
+              AND pp.completion_score >= 60
+            `,
+          )
+          .all(offerId) as Array<Record<string, unknown>>;
+
+        if (talents.length === 0) {
+          return json({
+            talents: [],
+            ranking: {
+              mode: "match",
+              tracked: trackMatch,
+              total: 0,
+              limit,
+            },
+          });
+        }
+
+        const offerForMatch: MatchOffer = {
+          id: offer.id,
+          title: offer.title,
+          project_type: offer.project_type,
+          description: offer.description,
+          city: offer.city,
+          deadline_at: offer.deadline_at,
+        };
+
+        const scored = await Promise.all(
+          talents.map(async (row) => {
+            const performer: MatchPerformer = {
+              user_id: asString(row.user_id),
+              stage_name: asString(row.stage_name),
+              city: asString(row.city),
+              bio: asString(row.bio),
+              specialty: asString(row.specialty),
+              languages: parseStoredLanguages(row.languages_json),
+              completion_score: clampScore(asFiniteNumber(row.completion_score) ?? 0),
+            };
+
+            const rule = computeRuleMatch(offerForMatch, performer);
+            const features = buildMlFeatures(offerForMatch, performer, rule);
+            const ml = await requestMlScore(
+              offerForMatch.id,
+              performer.user_id,
+              rule.rule_score,
+              features,
+            );
+            const finalScore = blendScore(rule.rule_score, ml?.ml_score);
+
+            let impressionId: string | null = null;
+            if (trackMatch) {
+              impressionId = insertMatchImpression({
+                offer_id: offerForMatch.id,
+                recruiter_user_id: auth.id,
+                performer_user_id: performer.user_id,
+                source: "offer_talents_list",
+                rule_score: rule.rule_score,
+                ml_score: ml?.ml_score,
+                final_score: finalScore,
+                model_version: ml?.model_version,
+              });
+            }
+
+            return {
+              performer_user_id: performer.user_id,
+              stage_name: performer.stage_name,
+              city: performer.city,
+              specialty: performer.specialty,
+              completion_score: performer.completion_score,
+              phone: asString(row.phone),
+              photo_url: asString(row.photo_url),
+              application_id: asString(row.application_id) || null,
+              application_status: asString(row.application_status) || null,
+              match_score: finalScore,
+              match_rule_score: rule.rule_score,
+              match_ml_score: ml?.ml_score ?? null,
+              match_reasons: rule.reasons,
+              match_impression_id: impressionId,
+            };
+          }),
+        );
+
+        scored.sort((a, b) => {
+          const scoreDelta = b.match_score - a.match_score;
+          if (scoreDelta !== 0) {
+            return scoreDelta;
+          }
+          const completionDelta = b.completion_score - a.completion_score;
+          if (completionDelta !== 0) {
+            return completionDelta;
+          }
+          return a.stage_name.localeCompare(b.stage_name, "fr", { sensitivity: "base" });
+        });
+
+        return json({
+          talents: scored.slice(0, limit),
+          ranking: {
+            mode: "match",
+            tracked: trackMatch,
+            total: scored.length,
+            limit,
+          },
+        });
+      }
+
       const offerApplyMatch = pathname.match(/^\/offers\/([^/]+)\/apply$/);
       if (offerApplyMatch && method === "POST") {
         const auth = requireAuth(req, ["performer"]);

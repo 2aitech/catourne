@@ -13,6 +13,7 @@ import { PerformerApplicationsPage } from "./pages/performer-applications";
 import { RecruiterDashboardPage } from "./pages/recruiter-dashboard";
 import { RecruiterOfferFormPage } from "./pages/recruiter-offer-form";
 import { RecruiterApplicationsPage } from "./pages/recruiter-applications";
+import { RecruiterOfferTalentsPage } from "./pages/recruiter-offer-talents";
 import { AdminReportsPage } from "./pages/admin-reports";
 import { TalentsPage } from "./pages/talents";
 import { RecruteursPage } from "./pages/recruteurs";
@@ -107,6 +108,14 @@ export function App() {
             element={
               <RequireRole role="recruiter">
                 <RecruiterApplicationsPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/recruiter/offers/:offerId/talents"
+            element={
+              <RequireRole role="recruiter">
+                <RecruiterOfferTalentsPage />
               </RequireRole>
             }
           />

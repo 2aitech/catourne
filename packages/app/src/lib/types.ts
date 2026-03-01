@@ -57,6 +57,23 @@ export type RecruiterApplication = {
   motivation_text: string;
 };
 
+export type RecruiterTalentMatch = {
+  performer_user_id: string;
+  stage_name: string;
+  city: string;
+  specialty: string;
+  completion_score: number;
+  phone: string;
+  photo_url: string;
+  application_id: string | null;
+  application_status: string | null;
+  match_score: number;
+  match_rule_score: number;
+  match_ml_score: number | null;
+  match_reasons: string[];
+  match_impression_id: string | null;
+};
+
 export type ReportItem = {
   id: string;
   reporter_email: string;

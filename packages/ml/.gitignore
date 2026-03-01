@@ -3,3 +3,8 @@ __pycache__/
 *.pyc
 models/
 dist/
+data/*.duckdb
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
