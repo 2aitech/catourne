@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../lib/auth-context";
 import { useLang } from "../lib/lang-context";
 import { request, formatDate } from "../lib/api";
 import type { Offer } from "../lib/types";
 import { Button, Badge, PageContainer } from "../components/ui";
+import { GlassButton } from "../components/ui/glass-button";
 import { CardStack } from "../components/ui/card-stack";
 import { FocusRail, type FocusRailItem } from "../components/ui/focus-rail";
 import heroBackground from "../assets/ait-benhaddou-moroccan-ancient-fortress-2026-01-07-06-29-51-utc.jpg";
@@ -18,7 +20,6 @@ export function HomePage() {
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [activeWhyTab, setActiveWhyTab] = useState("cinema");
   const [expandedWhyStep, setExpandedWhyStep] = useState<string | null>("step-1");
-  const [heroAudience, setHeroAudience] = useState<"performer" | "recruiter">("performer");
 
   useEffect(() => {
     request<{ offers: Offer[] }>("/offers")
@@ -71,15 +72,74 @@ export function HomePage() {
       text: "Votre portfolio est optimisé pour être mis en avant auprès des décideurs du secteur au bon moment.",
     },
   ];
-  const heroGuestHref =
-    heroAudience === "recruiter" ? "/register?role=recruiter" : "/register?role=performer";
-  const heroGuestLabel = heroAudience === "recruiter" ? h.heroPostJob : h.heroJoinNow;
+  const heroGuestHref = "/register?role=performer";
+  const heroGuestLabel = h.heroJoinNow;
+
+  const [activePerformerIdx, setActivePerformerIdx] = useState(0);
+  const performers: FocusRailItem[] = [
+    {
+      id: 1,
+      title: "Amina El Idrissi",
+      description: "Actrice primée, spécialisée dans le cinéma d'auteur et les drames historiques.",
+      meta: "Actrice • Cinéma",
+      imageSrc: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=1000&auto=format&fit=crop",
+      href: "/talents",
+    },
+    {
+      id: 2,
+      title: "Youssef Benali",
+      description: "Mannequin international avec plus de 10 ans d'expérience en mode et publicité.",
+      meta: "Mannequin • Mode",
+      imageSrc: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1000&auto=format&fit=crop",
+      href: "/talents",
+    },
+    {
+      id: 3,
+      title: "Fatima Zahra Ouali",
+      description: "Danseuse contemporaine et chorégraphe, fusionnant tradition et modernité.",
+      meta: "Danseuse • Scène",
+      imageSrc: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000&auto=format&fit=crop",
+      href: "/talents",
+    },
+    {
+      id: 4,
+      title: "Karim Tazi",
+      description: "Acteur de doublage et voix-off pour documentaires et publicités nationales.",
+      meta: "Voix-off • Audio",
+      imageSrc: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1000&auto=format&fit=crop",
+      href: "/talents",
+    },
+    {
+      id: 5,
+      title: "Nora Benmoussa",
+      description: "Figurante et actrice de second rôle, vue dans plus de 30 productions marocaines.",
+      meta: "Figurante • Cinéma",
+      imageSrc: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1000&auto=format&fit=crop",
+      href: "/talents",
+    },
+    {
+      id: 6,
+      title: "Omar Fassi",
+      description: "Cascadeur professionnel spécialisé dans les scènes d'action et les films d'aventure.",
+      meta: "Cascadeur • Action",
+      imageSrc: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1000&auto=format&fit=crop",
+      href: "/talents",
+    },
+    {
+      id: 7,
+      title: "Leila Chraibi",
+      description: "Modèle photo et influenceuse, ambassadrice de marques marocaines et internationales.",
+      meta: "Modèle • Mode",
+      imageSrc: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1000&auto=format&fit=crop",
+      href: "/talents",
+    },
+  ];
 
   return (
     <div className="bg-noir-950 text-cream-100">
 
       {/* ─── HERO ─── */}
-      <section className="relative flex min-h-[95vh] items-center overflow-hidden">
+      <section className="relative flex min-h-[100dvh] items-center overflow-hidden -mt-[68px] pt-[68px]">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url('${heroBackground}')` }}
@@ -87,34 +147,21 @@ export function HomePage() {
         <div className="absolute inset-0 hero-overlay" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(194,142,76,0.15),transparent_55%)]" />
 
-        <PageContainer className="relative z-10 w-full py-24 sm:py-28">
-          <div className="mx-auto max-w-5xl text-center">
+        <PageContainer className="relative z-10 w-full py-20 sm:py-24 xl:py-32">
+          <div className="mx-auto max-w-7xl text-center">
 
             {!user && (
               <div className="mb-8 flex justify-center">
                 <div className="inline-flex rounded-full border border-white/10 bg-noir-950/30 p-1 backdrop-blur-sm">
-                  <button
-                    type="button"
-                    onClick={() => setHeroAudience("performer")}
-                    className={`rounded-full px-5 py-2 text-[10px] font-bold uppercase tracking-[0.25em] transition-colors sm:px-6 ${
-                      heroAudience === "performer"
-                        ? "bg-gold-500 text-noir-950"
-                        : "text-cream-300 hover:text-cream-100"
-                    }`}
-                  >
+                  <span className="rounded-full px-5 py-2 text-[10px] font-bold uppercase tracking-[0.25em] bg-gold-500 text-noir-950 sm:px-6">
                     {h.heroBtnTalent}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setHeroAudience("recruiter")}
-                    className={`rounded-full px-5 py-2 text-[10px] font-bold uppercase tracking-[0.25em] transition-colors sm:px-6 ${
-                      heroAudience === "recruiter"
-                        ? "bg-gold-500 text-noir-950"
-                        : "text-cream-300 hover:text-cream-100"
-                    }`}
+                  </span>
+                  <Link
+                    to="/recruteurs"
+                    className="rounded-full px-5 py-2 text-[10px] font-bold uppercase tracking-[0.25em] text-cream-300 hover:text-cream-100 transition-colors sm:px-6"
                   >
                     {h.heroBtnRecruiter}
-                  </button>
+                  </Link>
                 </div>
               </div>
             )}
@@ -129,13 +176,11 @@ export function HomePage() {
             </div>
 
             {/* Heading */}
-            <h1 className="font-serif text-5xl font-bold leading-[1.05] tracking-tight text-cream-50 sm:text-7xl lg:text-8xl">
-              Le talent rencontre
-              <br />
-              <span className="text-gradient-gold italic">l'opportunite</span>
+            <h1 className="font-serif text-4xl font-bold leading-[1.05] tracking-tight text-cream-50 sm:text-6xl lg:text-7xl xl:text-8xl sm:whitespace-nowrap">
+              Le talent rencontre <span className="text-gradient-gold italic">l'opportunite</span>
             </h1>
 
-            <p className="mx-auto mt-8 max-w-2xl text-base leading-relaxed text-cream-400 sm:text-xl">
+            <p className="mx-auto mt-8 text-base leading-relaxed text-cream-400 sm:text-xl xl:text-2xl">
               {h.heroDesc}
             </p>
 
@@ -154,12 +199,13 @@ export function HomePage() {
                 </Link>
               ) : (
                 <Link to={heroGuestHref}>
-                  <Button
+                  <GlassButton
                     size="lg"
-                    className="min-w-[220px] rounded-sm px-10 text-[10px] font-bold uppercase tracking-widest"
+                    className="min-w-[220px]"
+                    contentClassName="text-[10px] font-bold uppercase tracking-widest"
                   >
                     {heroGuestLabel}
-                  </Button>
+                  </GlassButton>
                 </Link>
               )}
             </div>
@@ -272,20 +318,18 @@ export function HomePage() {
         <PageContainer className="relative">
 
           {/* Header */}
-          <div className="flex flex-col items-center mb-12 gap-5 text-center">
-            <div className="max-w-3xl">
-              <span className="text-gold-500 text-[10px] font-bold uppercase tracking-[0.4em] mb-4 block">
-                {h.gridLabel}
-              </span>
-              <h2 className="font-serif text-4xl font-bold text-cream-100 sm:text-5xl md:text-6xl leading-tight">
-                {h.gridHeading.split(h.gridInfiniteAccent)[0]}
-                <span className="text-gradient-gold italic">{h.gridInfiniteAccent}</span>
-                {h.gridHeading.split(h.gridInfiniteAccent)[1]}
-              </h2>
-              <p className="mt-4 text-cream-500 max-w-xl mx-auto text-sm leading-relaxed">
-                {h.heroDesc}
-              </p>
-            </div>
+          <div className="text-center mb-12">
+            <span className="text-gold-500 text-[10px] font-bold uppercase tracking-[0.4em] mb-4 block">
+              {h.gridLabel}
+            </span>
+            <h2 className="font-serif text-4xl font-bold text-cream-100 sm:text-5xl md:text-6xl leading-tight sm:whitespace-nowrap">
+              {h.gridHeading.split(h.gridInfiniteAccent)[0]}
+              <span className="text-gradient-gold italic">{h.gridInfiniteAccent}</span>
+              {h.gridHeading.split(h.gridInfiniteAccent)[1]}
+            </h2>
+            <p className="mt-4 text-cream-500 text-sm">
+              {h.heroDesc}
+            </p>
           </div>
 
           {/* Category filter pills */}
@@ -331,12 +375,13 @@ export function HomePage() {
 
           <div className="mt-14 text-center">
             <Link to="/offers">
-              <Button
-                variant="outline"
-                className="rounded-full px-12 border-white/20 text-cream-100 hover:border-gold-500 text-[10px] uppercase tracking-widest font-bold"
+              <GlassButton
+                size="default"
+                contentClassName="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
               >
-                {h.gridViewAll} &nbsp;&rarr;
-              </Button>
+                {h.gridViewAll}
+                <span className="inline-block transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
+              </GlassButton>
             </Link>
           </div>
         </PageContainer>
@@ -349,20 +394,18 @@ export function HomePage() {
         <PageContainer className="relative z-10 text-center">
 
           {/* Header */}
-          <div className="flex flex-col items-center mb-12 gap-5">
-            <div className="max-w-3xl">
-              <span className="text-gold-500 text-[10px] font-bold uppercase tracking-[0.4em] mb-4 block">
-                {h.gridInfiniteLabel}
-              </span>
-              <h2 className="font-serif text-4xl font-bold text-cream-100 sm:text-5xl md:text-6xl leading-tight">
-                {h.gridInfiniteHeading.split(h.gridInfiniteAccent)[0]}
-                <span className="text-gradient-gold italic">{h.gridInfiniteAccent}</span>
-                {h.gridInfiniteHeading.split(h.gridInfiniteAccent)[1]}
-              </h2>
-              <p className="mt-4 text-cream-500 max-w-xl mx-auto text-sm leading-relaxed">
-                {h.heroDesc}
-              </p>
-            </div>
+          <div className="text-center mb-12">
+            <span className="text-gold-500 text-[10px] font-bold uppercase tracking-[0.4em] mb-4 block">
+              {h.gridInfiniteLabel}
+            </span>
+            <h2 className="font-serif text-4xl font-bold text-cream-100 sm:text-5xl md:text-6xl leading-tight sm:whitespace-nowrap">
+              {h.gridInfiniteHeading.split(h.gridInfiniteAccent)[0]}
+              <span className="text-gradient-gold italic">{h.gridInfiniteAccent}</span>
+              {h.gridInfiniteHeading.split(h.gridInfiniteAccent)[1]}
+            </h2>
+            <p className="mt-4 text-cream-500 text-sm">
+              {h.heroDesc}
+            </p>
           </div>
 
           {/* Category card stack */}
@@ -431,110 +474,87 @@ export function HomePage() {
 
           <div className="mt-10">
             <Link to="/offers">
-              <Button
-                variant="outline"
-                className="rounded-full px-12 border-white/20 text-cream-100 hover:border-gold-500 text-[10px] uppercase tracking-widest font-bold group"
+              <GlassButton
+                size="default"
+                contentClassName="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
               >
                 {h.gridViewAll}
-                <span className="ml-2 inline-block transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
-              </Button>
+                <span className="inline-block transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
+              </GlassButton>
             </Link>
           </div>
         </PageContainer>
       </section>
 
       {/* ─── PERFORMERS SPOTLIGHT ─── */}
-      <section className="py-24 bg-noir-950 relative border-t border-white/5">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(194,142,76,0.08),transparent_40%)] pointer-events-none" />
-        <PageContainer className="relative z-10">
-          <div className="flex flex-col items-center mb-8 gap-5 text-center">
-            <div className="max-w-3xl">
+      <section className="relative overflow-hidden border-t border-white/5">
+        {/* ── Full-section ambient background — changes with active performer ── */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <AnimatePresence mode="popLayout">
+            <motion.div
+              key={`section-bg-${performers[activePerformerIdx]?.id}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.2, ease: "easeOut" }}
+              className="absolute inset-0"
+            >
+              <img
+                src={performers[activePerformerIdx]?.imageSrc}
+                alt=""
+                className="h-full w-full object-cover blur-[120px] saturate-150 scale-110"
+              />
+            </motion.div>
+          </AnimatePresence>
+          {/* Dark veil so content stays readable */}
+          <div className="absolute inset-0 bg-noir-950/80" />
+          {/* Bottom fade into the next section */}
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-noir-950" />
+          {/* Top fade from previous section */}
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-noir-900 to-transparent" />
+          {/* Subtle gold radial glow */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_60%,rgba(194,142,76,0.12),transparent)]" />
+        </div>
+
+        {/* ── Header ── */}
+        <div className="relative z-10 pt-20 pb-6">
+          <PageContainer>
+            <div className="text-center">
               <span className="text-gold-500 text-[10px] font-bold uppercase tracking-[0.4em] mb-4 block">
                 Talents d'exception
               </span>
-              <h2 className="font-serif text-4xl font-bold text-cream-100 sm:text-5xl md:text-6xl leading-tight">
+              <h2 className="font-serif text-4xl font-bold text-cream-100 sm:text-5xl md:text-6xl leading-tight sm:whitespace-nowrap">
                 Nos <span className="text-gradient-gold italic">performeurs</span>
               </h2>
-              <p className="mt-4 text-cream-500 max-w-xl mx-auto text-sm leading-relaxed">
+              <p className="mt-4 text-cream-500 text-sm">
                 Découvrez les artistes qui font vivre le cinéma, la publicité et la mode au Maroc.
               </p>
             </div>
-          </div>
-        </PageContainer>
+          </PageContainer>
+        </div>
 
-        <FocusRail
-          items={[
-            {
-              id: 1,
-              title: "Amina El Idrissi",
-              description: "Actrice primée, spécialisée dans le cinéma d'auteur et les drames historiques.",
-              meta: "Actrice • Cinéma",
-              imageSrc: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=1000&auto=format&fit=crop",
-              href: "/talents",
-            },
-            {
-              id: 2,
-              title: "Youssef Benali",
-              description: "Mannequin international avec plus de 10 ans d'expérience en mode et publicité.",
-              meta: "Mannequin • Mode",
-              imageSrc: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1000&auto=format&fit=crop",
-              href: "/talents",
-            },
-            {
-              id: 3,
-              title: "Fatima Zahra Ouali",
-              description: "Danseuse contemporaine et chorégraphe, fusionnant tradition et modernité.",
-              meta: "Danseuse • Scène",
-              imageSrc: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000&auto=format&fit=crop",
-              href: "/talents",
-            },
-            {
-              id: 4,
-              title: "Karim Tazi",
-              description: "Acteur de doublage et voix-off pour documentaires et publicités nationales.",
-              meta: "Voix-off • Audio",
-              imageSrc: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1000&auto=format&fit=crop",
-              href: "/talents",
-            },
-            {
-              id: 5,
-              title: "Nora Benmoussa",
-              description: "Figurante et actrice de second rôle, vue dans plus de 30 productions marocaines.",
-              meta: "Figurante • Cinéma",
-              imageSrc: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1000&auto=format&fit=crop",
-              href: "/talents",
-            },
-            {
-              id: 6,
-              title: "Omar Fassi",
-              description: "Cascadeur professionnel spécialisé dans les scènes d'action et les films d'aventure.",
-              meta: "Cascadeur • Action",
-              imageSrc: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1000&auto=format&fit=crop",
-              href: "/talents",
-            },
-            {
-              id: 7,
-              title: "Leila Chraibi",
-              description: "Modèle photo et influenceuse, ambassadrice de marques marocaines et internationales.",
-              meta: "Modèle • Mode",
-              imageSrc: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1000&auto=format&fit=crop",
-              href: "/talents",
-            },
-          ]}
-          autoPlay
-          interval={5000}
-          loop
-        />
+        {/* ── FocusRail — no internal ambient (section handles it) ── */}
+        <div className="relative z-10">
+          <FocusRail
+            items={performers}
+            autoPlay
+            interval={5000}
+            loop
+            showAmbience={false}
+            onActiveChange={(idx) => setActivePerformerIdx(idx)}
+          />
+        </div>
 
-        <div className="mt-10 text-center">
+        {/* ── CTA ── */}
+        <div className="relative z-10 pb-20 text-center">
           <Link to="/talents">
-            <Button
-              variant="outline"
-              className="rounded-full px-12 border-white/20 text-cream-100 hover:border-gold-500 text-[10px] uppercase tracking-widest font-bold group"
+            <GlassButton
+              size="default"
+              contentClassName="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
             >
               Voir tous les talents
-              <span className="ml-2 inline-block transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
-            </Button>
+              <span className="inline-block transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
+            </GlassButton>
           </Link>
         </div>
       </section>
@@ -547,11 +567,11 @@ export function HomePage() {
               Pourquoi nous ?
             </span>
 
-            <h2 className="text-balance font-serif text-4xl font-bold leading-[0.95] text-white sm:text-5xl md:text-6xl">
+            <h2 className="font-serif text-4xl font-bold leading-[0.95] text-white sm:text-5xl md:text-6xl sm:whitespace-nowrap">
               Pourquoi <span className="text-gold-500 italic">CATOURNE</span> ?
             </h2>
 
-            <p className="mt-6 max-w-xl text-white/60">
+            <p className="mt-6 text-white/60">
               Nous redéfinissons le casting au Maroc en connectant les meilleurs talents avec les productions les plus prestigieuses.
             </p>
 
@@ -621,7 +641,7 @@ export function HomePage() {
           <div className="md:col-span-6">
             <div
               className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-0 shadow-2xl"
-              style={{ height: 600, minHeight: 600 }}
+              style={{ height: "clamp(320px, 50vw, 600px)" }}
             >
               <div className="relative h-full w-full">
                 {whyCatourneTabs.map((tab, index) => (
@@ -661,86 +681,114 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ─── REGION HIGHLIGHT ─── */}
-      <section className="relative py-32 overflow-hidden border-t border-white/5">
-        <div className="absolute inset-0 z-0">
-          <div
-            className="w-full h-full bg-cover bg-center"
-            style={{ backgroundImage: `url('${heroBackground}')` }}
-          />
-          <div className="absolute inset-0 bg-noir-950/65 backdrop-blur-[2px]" />
-        </div>
+      {/* ─── FINAL CTA ─── */}
+      <section className="relative overflow-hidden py-40 bg-noir-950">
+        {/* Background layers */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_55%_at_50%_100%,rgba(194,142,76,0.20),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_35%_at_50%_0%,rgba(194,142,76,0.06),transparent)]" />
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.6) 1px,transparent 1px)",
+            backgroundSize: "72px 72px",
+          }}
+        />
+        {/* Top & bottom accent lines */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/50 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold-500/20 to-transparent" />
+        {/* Decorative side orbs */}
+        <div className="absolute -left-32 top-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-gold-500/5 blur-3xl" />
+        <div className="absolute -right-32 top-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-gold-500/5 blur-3xl" />
+
         <PageContainer className="relative z-10 text-center">
-          <span className="text-gold-400 font-bold uppercase tracking-widest text-sm mb-4 block">
-            {h.regionLabel}
-          </span>
-          <h2 className="font-serif text-4xl font-bold text-cream-100 sm:text-5xl mb-6">
-            {h.regionHeading}
+          {/* Eyebrow */}
+          <div className="mb-10 flex items-center justify-center gap-3">
+            <span className="h-px w-12 bg-gold-500/50" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.45em] text-gold-400">
+              Commencer aujourd'hui
+            </span>
+            <span className="h-px w-12 bg-gold-500/50" />
+          </div>
+
+          {/* Heading */}
+          <h2 className="font-serif font-bold leading-[0.92] tracking-tight text-cream-50 text-4xl sm:text-6xl lg:text-8xl mb-8 sm:whitespace-nowrap">
+            {h.ctaHeading.split(" ").slice(0, -2).join(" ")}{" "}
+            <span className="text-gradient-gold italic">
+              {h.ctaHeading.split(" ").slice(-2).join(" ")}
+            </span>
           </h2>
-          <p className="text-lg text-cream-300 mb-16 max-w-3xl mx-auto font-light leading-relaxed italic">
-            "{h.regionDesc}"
+
+          <p className="text-base sm:text-lg text-cream-400 mb-14 leading-relaxed">
+            {h.ctaDesc}
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-4xl mx-auto mb-16">
+          {/* Stats row */}
+          <div className="mb-14 flex flex-wrap justify-center gap-12">
             {[
-              {
-                title: "Kasbah Aït Benhaddou",
-                desc: "Site classé au patrimoine mondial de l'UNESCO et décor de films légendaires.",
-              },
-              { title: h.regionStat2, desc: h.regionStat2Label },
-              { title: h.regionStat4, desc: h.regionStat4Label },
-            ].map((f) => (
-              <div key={f.title} className="flex flex-col items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-gold-500/20 border border-gold-500 flex items-center justify-center">
-                  <div className="w-3 h-3 rounded-full bg-gold-500" />
-                </div>
-                <div>
-                  <h4 className="text-cream-100 font-bold mb-2">{f.title}</h4>
-                  <p className="text-cream-400 text-sm">{f.desc}</p>
-                </div>
+              { value: "+500", label: "Talents inscrits" },
+              { value: "+200", label: "Castings publiés" },
+              { value: "100%", label: "Gratuit pour les talents" },
+            ].map((stat) => (
+              <div key={stat.label} className="flex flex-col items-center">
+                <span className="font-serif text-3xl font-bold text-gold-400">
+                  {stat.value}
+                </span>
+                <span className="mt-1 text-[10px] uppercase tracking-[0.25em] text-cream-500">
+                  {stat.label}
+                </span>
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
-            <QuickStat value={h.regionStat1} label={h.regionStat1Label} />
-            <QuickStat value={h.regionStat2} label={h.regionStat2Label} />
-            <QuickStat value={h.regionStat3} label={h.regionStat3Label} />
-            <QuickStat value={h.regionStat4} label={h.regionStat4Label} />
+          {/* CTA buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link to="/register">
+              <GlassButton
+                size="lg"
+                contentClassName="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest min-w-[220px] justify-center"
+              >
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {h.ctaRegister}
+              </GlassButton>
+            </Link>
+            <Link to="/offers">
+              <button className="group flex items-center gap-2 px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-cream-300 hover:text-gold-400 transition-colors duration-200">
+                {h.ctaBrowse}
+                <span className="inline-block transition-transform duration-200 group-hover:translate-x-1">
+                  &rarr;
+                </span>
+              </button>
+            </Link>
           </div>
-        </PageContainer>
-      </section>
 
-      {/* ─── FINAL CTA ─── */}
-      <section className="py-32 bg-noir-900 border-t border-white/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(194,142,76,0.1),transparent_35%)] pointer-events-none" />
-        <PageContainer className="relative text-center">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="font-serif text-4xl font-bold text-cream-100 mb-8 sm:text-5xl lg:text-7xl">
-              {h.ctaHeading}
-            </h2>
-            <p className="text-lg text-cream-400 mb-12 max-w-2xl mx-auto">
-              {h.ctaDesc}
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/register">
-                <Button
-                  size="lg"
-                  className="px-12 rounded-sm text-[10px] font-bold uppercase tracking-widest"
+          {/* Trust badges */}
+          <div className="mt-14 flex flex-wrap justify-center gap-8">
+            {[
+              "Gratuit pour les talents",
+              "Sans engagement",
+              "Accès immédiat",
+            ].map((badge) => (
+              <span
+                key={badge}
+                className="flex items-center gap-2 text-xs text-cream-600"
+              >
+                <svg
+                  className="h-3.5 w-3.5 shrink-0 text-gold-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                 >
-                  {h.ctaRegister}
-                </Button>
-              </Link>
-              <Link to="/offers">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="px-12 rounded-sm text-[10px] font-bold uppercase tracking-widest border-white/20 text-cream-100 hover:bg-white/10"
-                >
-                  {h.ctaBrowse}
-                </Button>
-              </Link>
-            </div>
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {badge}
+              </span>
+            ))}
           </div>
         </PageContainer>
       </section>
@@ -792,14 +840,6 @@ function CategoryCard({
   );
 }
 
-function QuickStat({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="rounded-2xl border border-cream-100/10 bg-noir-900/60 px-5 py-4 backdrop-blur-sm text-center">
-      <p className="font-serif text-xl font-bold text-gold-400">{value}</p>
-      <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-cream-500">{label}</p>
-    </div>
-  );
-}
 
 function CastingCard({
   offer,

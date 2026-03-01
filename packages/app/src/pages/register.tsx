@@ -3,46 +3,21 @@ import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { request } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import type { Role } from "../lib/types";
-import { Button, Input, Card, Select } from "../components/ui";
+import { Input, Select } from "../components/ui";
+import { CheckCircle2, ChevronRight, ChevronLeft, Upload, ImagePlus } from "lucide-react";
+import logo from "../assets/LOGOS/LOGO-06.png";
 
 const SPECIALTY_OPTIONS = [
-  "Acteur/Actrice",
-  "Figurant",
-  "Danseur",
-  "Chanteur",
-  "Mannequin",
-  "Cascadeur",
-  "Voix off",
-  "Technicien",
-  "Autre",
+  "Acteur/Actrice", "Figurant", "Danseur", "Chanteur",
+  "Mannequin", "Cascadeur", "Voix off", "Technicien", "Autre",
 ];
-
 const CITY_OPTIONS = [
-  "Casablanca",
-  "Rabat",
-  "Marrakech",
-  "Tanger",
-  "Fes",
-  "Agadir",
-  "Meknes",
-  "Oujda",
-  "Kenitra",
-  "Tetouan",
-  "Ouarzazate",
-  "Rachidia",
+  "Casablanca", "Rabat", "Marrakech", "Tanger", "Fes", "Agadir",
+  "Meknes", "Oujda", "Kenitra", "Tetouan", "Ouarzazate", "Rachidia",
 ];
-
 const LANGUAGE_OPTIONS = [
-  "Arabe",
-  "Francais",
-  "Anglais",
-  "Espagnol",
-  "Amazigh",
-  "Italien",
-  "Allemand",
-  "Portugais",
+  "Arabe", "Francais", "Anglais", "Espagnol", "Amazigh", "Italien", "Allemand", "Portugais",
 ];
-
 const GENDER_OPTIONS = ["Homme", "Femme", "Autre"];
 
 const MAX_GALLERY_FILES = 12;
@@ -58,6 +33,8 @@ export function RegisterPage() {
 
   const [step, setStep] = useState<1 | 2>(preselectedRole ? 2 : 1);
   const [role, setRole] = useState<Role>(preselectedRole ?? "performer");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [specialty, setSpecialty] = useState("");
@@ -83,39 +60,22 @@ export function RegisterPage() {
   const [performerSetupInProgress, setPerformerSetupInProgress] = useState(false);
 
   useEffect(() => {
-    if (!profilePhoto) {
-      setProfilePreviewUrl("");
-      return;
-    }
+    if (!profilePhoto) { setProfilePreviewUrl(""); return; }
     const url = URL.createObjectURL(profilePhoto);
     setProfilePreviewUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [profilePhoto]);
 
   useEffect(() => {
-    if (galleryPhotos.length === 0) {
-      setGalleryPreviewUrls([]);
-      return;
-    }
-    const urls = galleryPhotos.map((file) => URL.createObjectURL(file));
+    if (galleryPhotos.length === 0) { setGalleryPreviewUrls([]); return; }
+    const urls = galleryPhotos.map((f) => URL.createObjectURL(f));
     setGalleryPreviewUrls(urls);
-    return () => {
-      for (const url of urls) {
-        URL.revokeObjectURL(url);
-      }
-    };
+    return () => { for (const u of urls) URL.revokeObjectURL(u); };
   }, [galleryPhotos]);
 
   useEffect(() => {
-    if (!galleryModalOpen) {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setGalleryModalOpen(false);
-      }
-    };
+    if (!galleryModalOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") setGalleryModalOpen(false); };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [galleryModalOpen]);
@@ -128,665 +88,512 @@ export function RegisterPage() {
   const hiddenGalleryImagesCount = Math.max(recentGalleryPreviewUrls.length - MAX_GALLERY_PREVIEW_TILES, 0);
 
   if (user && !performerSetupInProgress) {
-    const dest =
-      user.role === "recruiter"
-        ? "/recruiter/dashboard"
-        : user.role === "admin"
-          ? "/admin/reports"
-          : "/performer/profile";
+    const dest = user.role === "recruiter" ? "/recruiter/dashboard" : user.role === "admin" ? "/admin/reports" : "/performer/profile";
     return <Navigate to={dest} replace />;
   }
 
-  const selectRole = (r: Role) => {
-    setRole(r);
-    setStep(2);
-    setFormStep(1);
-    setError("");
-  };
-
-  const handleLanguageToggle = (language: string) => {
-    setLanguages((prev) =>
-      prev.includes(language)
-        ? prev.filter((current) => current !== language)
-        : [...prev, language],
-    );
-  };
-
-  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setProfilePhoto(e.target.files?.[0] ?? null);
-  };
-
+  const selectRole = (r: Role) => { setRole(r); setStep(2); setFormStep(1); setError(""); };
+  const handleLanguageToggle = (l: string) => setLanguages((p) => p.includes(l) ? p.filter((x) => x !== l) : [...p, l]);
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => setProfilePhoto(e.target.files?.[0] ?? null);
   const handleGalleryPhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    if (files.length === 0) {
-      return;
-    }
-
+    if (!files.length) return;
     setGalleryPhotos((prev) => {
       const merged = [...prev, ...files];
-      const deduped = merged.filter(
-        (file, index, all) =>
-          all.findIndex(
-            (candidate) =>
-              candidate.name === file.name &&
-              candidate.size === file.size &&
-              candidate.lastModified === file.lastModified,
-          ) === index,
-      );
+      const deduped = merged.filter((f, i, all) => all.findIndex((c) => c.name === f.name && c.size === f.size && c.lastModified === f.lastModified) === i);
       return deduped.slice(0, MAX_GALLERY_FILES);
     });
-
-    // Allow re-selecting the same file(s) on the next pick.
     e.target.value = "";
   };
 
   const validateAccountStep = () => {
-    if (!email.trim()) {
-      return "L'email est obligatoire.";
-    }
-    if (!password) {
-      return "Le mot de passe est obligatoire.";
-    }
-    if (password.length < 8) {
-      return "Le mot de passe doit contenir au moins 8 caracteres.";
-    }
+    if (!firstName.trim()) return "Le prénom est obligatoire.";
+    if (!lastName.trim()) return "Le nom est obligatoire.";
+    if (!email.trim()) return "L'email est obligatoire.";
+    if (!password) return "Le mot de passe est obligatoire.";
+    if (password.length < 8) return "Le mot de passe doit contenir au moins 8 caracteres.";
     return "";
   };
-
-  const validatePerformerStep = (stepValue: number) => {
-    if (stepValue === 1) {
-      return validateAccountStep();
-    }
-    if (stepValue === 2) {
-      if (!specialty || !gender || !city || languages.length === 0 || !phone) {
-        return "Specialite, genre, ville, langues et telephone sont obligatoires.";
-      }
-      return "";
-    }
-    if (stepValue === 3) {
-      if (
-        !heightCm ||
-        !weightKg ||
-        !neckCircumferenceCm ||
-        !pantLengthCm ||
-        !headCircumferenceCm ||
-        !chestCircumferenceCm ||
-        !shoeSize
-      ) {
-        return "Toutes les mensurations sont obligatoires.";
-      }
-      return "";
-    }
-    if (stepValue === 4 && !profilePhoto) {
-      return "La photo de profil est obligatoire.";
-    }
+  const validatePerformerStep = (s: number) => {
+    if (s === 1) return validateAccountStep();
+    if (s === 2 && (!specialty || !gender || !city || !languages.length || !phone)) return "Specialite, genre, ville, langues et telephone sont obligatoires.";
+    if (s === 3 && (!heightCm || !weightKg || !neckCircumferenceCm || !pantLengthCm || !headCircumferenceCm || !chestCircumferenceCm || !shoeSize)) return "Toutes les mensurations sont obligatoires.";
+    if (s === 4 && !profilePhoto) return "La photo de profil est obligatoire.";
     return "";
   };
-
-  const validateCurrentStep = () =>
-    role === "performer" ? validatePerformerStep(formStep) : validateAccountStep();
-
+  const validateCurrentStep = () => role === "performer" ? validatePerformerStep(formStep) : validateAccountStep();
   const validateFullPerformerForm = () => {
-    for (let currentStep = 1; currentStep <= PERFORMER_FORM_STEPS.length; currentStep += 1) {
-      const message = validatePerformerStep(currentStep);
-      if (message) {
-        return message;
-      }
-    }
+    for (let s = 1; s <= PERFORMER_FORM_STEPS.length; s++) { const m = validatePerformerStep(s); if (m) return m; }
     return "";
   };
-
   const handleNextStep = () => {
-    const validationError = validateCurrentStep();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    setError("");
-    setFormStep((prev) => Math.min(prev + 1, totalFormSteps));
+    const err = validateCurrentStep();
+    if (err) { setError(err); return; }
+    setError(""); setFormStep((p) => Math.min(p + 1, totalFormSteps));
   };
-
-  const handlePreviousStep = () => {
-    setError("");
-    setFormStep((prev) => Math.max(prev - 1, 1));
-  };
+  const handlePreviousStep = () => { setError(""); setFormStep((p) => Math.max(p - 1, 1)); };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
+    e.preventDefault(); setError("");
     const accountError = validateAccountStep();
-    if (accountError) {
-      setError(accountError);
-      return;
-    }
-
-    if (role === "performer") {
-      const performerError = validateFullPerformerForm();
-      if (performerError) {
-        setError(performerError);
-        return;
-      }
-    }
-
-    if (!isLastFormStep) {
-      handleNextStep();
-      return;
-    }
-
-    setLoading(true);
-    setPerformerSetupInProgress(role === "performer");
+    if (accountError) { setError(accountError); return; }
+    if (role === "performer") { const pe = validateFullPerformerForm(); if (pe) { setError(pe); return; } }
+    if (!isLastFormStep) { handleNextStep(); return; }
+    setLoading(true); setPerformerSetupInProgress(role === "performer");
     try {
       await register(email.trim(), password, role);
       if (role === "performer") {
-        await request("/performers/me", {
-          method: "PATCH",
-          body: {
-            specialty,
-            gender,
-            city,
-            languages,
-            phone,
-            height_cm: heightCm,
-            weight_kg: weightKg,
-            neck_circumference_cm: neckCircumferenceCm,
-            pant_length_cm: pantLengthCm,
-            head_circumference_cm: headCircumferenceCm,
-            chest_circumference_cm: chestCircumferenceCm,
-            shoe_size: shoeSize,
-          },
-        });
-
-        if (profilePhoto) {
-          const body = new FormData();
-          body.append("photo", profilePhoto);
-          await request("/uploads/performer-photo", {
-            method: "POST",
-            body,
-          });
-        }
-
-        if (galleryPhotos.length > 0) {
-          const body = new FormData();
-          for (const photo of galleryPhotos) {
-            body.append("photos", photo);
-          }
-          await request("/uploads/performer-gallery", {
-            method: "POST",
-            body,
-          });
-        }
+        await request("/performers/me", { method: "PATCH", body: { first_name: firstName.trim(), last_name: lastName.trim(), specialty, gender, city, languages, phone, height_cm: heightCm, weight_kg: weightKg, neck_circumference_cm: neckCircumferenceCm, pant_length_cm: pantLengthCm, head_circumference_cm: headCircumferenceCm, chest_circumference_cm: chestCircumferenceCm, shoe_size: shoeSize } });
+        if (profilePhoto) { const b = new FormData(); b.append("photo", profilePhoto); await request("/uploads/performer-photo", { method: "POST", body: b }); }
+        if (galleryPhotos.length > 0) { const b = new FormData(); for (const p of galleryPhotos) b.append("photos", p); await request("/uploads/performer-gallery", { method: "POST", body: b }); }
       }
       navigate(role === "recruiter" ? "/recruiter/dashboard" : "/performer/profile");
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setLoading(false);
-      setPerformerSetupInProgress(false);
+      setLoading(false); setPerformerSetupInProgress(false);
     }
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-5 py-16 animate-page-enter">
-      <div className="w-full max-w-2xl">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <Link to="/" className="inline-flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 border border-gold-600 flex items-center justify-center">
-              <span className="text-gold-400 font-display font-bold">C</span>
+    <>
+      <div className="min-h-[calc(100dvh-68px)] flex bg-noir-950 overflow-x-hidden">
+
+        {/* ── Left panel: cinematic ──────────────────────────── */}
+        <div className="hidden lg:flex lg:w-[42%] xl:w-[38%] relative flex-col overflow-hidden shrink-0">
+          {/* Background */}
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=1200')" }}
+          />
+          <div className="absolute inset-0 bg-noir-950/70" />
+          <div className="absolute inset-0 bg-gradient-to-t from-noir-950 via-noir-950/30 to-noir-950/60" />
+          <div className="absolute inset-0 bg-gradient-to-r from-noir-950/40 to-transparent" />
+          {/* Gold radial */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_30%_70%,rgba(194,142,76,0.12),transparent)] pointer-events-none" />
+
+          {/* Content */}
+          <div className="relative z-10 flex flex-col justify-between h-full p-10 xl:p-12">
+            {/* Top: empty spacer */}
+            <div />
+
+            {/* Center: headline */}
+            <div>
+              <Link to="/" className="inline-block mb-6">
+                <img src={logo} alt="CATOURNE" className="w-14 h-14 rounded-2xl object-cover shadow-xl shadow-gold-500/25" />
+              </Link>
+              <div className="flex items-center gap-3 mb-5">
+                <span className="h-px w-8 bg-gold-500" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-gold-400">Plateforme de casting</span>
+              </div>
+              <h2 className="font-serif font-bold text-cream-50 leading-tight mb-4" style={{ fontSize: "clamp(1.8rem,3vw,2.6rem)" }}>
+                Donnez vie à<br />
+                votre talent.
+              </h2>
+              <p className="text-cream-400 text-sm leading-relaxed max-w-xs">
+                Rejoignez +500 talents et recruteurs qui font confiance à CATOURNE pour leurs castings au Maroc.
+              </p>
             </div>
-          </Link>
-          <h1 className="font-display text-3xl font-bold text-cream-100">Creer votre compte</h1>
-          <p className="text-cream-500 mt-3 text-sm">
-            {step === 1
-              ? "Choisissez votre profil pour commencer"
-              : `Inscription en tant que ${role === "performer" ? "performeur" : "recruteur"}`}
-          </p>
+
+            {/* Bottom: social proof card */}
+            <div className="rounded-2xl border border-white/10 bg-noir-900/60 backdrop-blur-md p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <img
+                  src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=80&auto=format&fit=crop"
+                  alt="Amina"
+                  className="w-9 h-9 rounded-full object-cover border border-gold-500/30"
+                />
+                <div>
+                  <p className="text-cream-100 text-xs font-semibold">Amina El Idrissi</p>
+                  <p className="text-gold-400 text-[10px] font-medium">Actrice · Casablanca</p>
+                </div>
+                <div className="ml-auto flex items-center gap-1 bg-gold-500/10 border border-gold-500/20 rounded-full px-2.5 py-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-gold-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-gold-400">Actif</span>
+                </div>
+              </div>
+              <p className="text-cream-500 text-xs leading-relaxed italic">
+                "Grâce à CATOURNE, j'ai décroché mon premier rôle en moins de deux semaines."
+              </p>
+            </div>
+          </div>
+
+          {/* Right edge fade */}
+          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-noir-950 to-transparent pointer-events-none" />
         </div>
 
-        {/* Step 1: Role selection */}
-        {step === 1 && (
-          <div className="grid sm:grid-cols-2 gap-5 stagger-children">
-            <RoleCard
-              title="Performeur"
-              description="Je suis artiste, acteur, figurant ou technicien et je cherche des opportunites de casting."
-              icon={
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              }
-              color="gold"
-              onClick={() => selectRole("performer")}
-            />
-            <RoleCard
-              title="Recruteur"
-              description="Je suis producteur, realisateur ou directeur de casting et je cherche des talents."
-              icon={
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              }
-              color="cream"
-              onClick={() => selectRole("recruiter")}
-            />
-          </div>
-        )}
+        {/* ── Right panel: form ──────────────────────────────── */}
+        <div className="flex-1 flex flex-col items-center justify-center px-5 sm:px-8 py-12 overflow-y-auto">
+          <div className="w-full max-w-lg">
 
-        {/* Step 2: Registration form */}
-        {step === 2 && (
-          <Card className="p-7 sm:p-9">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-widest text-cream-500 mb-3">
-                  Etape {formStep} / {totalFormSteps}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {formStepLabels.map((label, index) => {
-                    const itemStep = index + 1;
-                    const active = itemStep === formStep;
-                    const completed = itemStep < formStep;
-                    return (
-                      <div
-                        key={label}
-                        className={`flex items-center gap-2 px-3 py-2 border rounded-sm text-xs uppercase tracking-widest ${
-                          active
-                            ? "border-gold-500 text-gold-400 bg-gold-500/10"
-                            : completed
-                              ? "border-jade-600/50 text-jade-500 bg-jade-600/10"
-                              : "border-noir-600 text-cream-500 bg-noir-800"
-                        }`}
-                      >
-                        <span
-                          className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] ${
-                            active
-                              ? "bg-gold-500 text-noir-950"
-                              : completed
-                                ? "bg-jade-600 text-noir-950"
-                                : "bg-noir-700 text-cream-400"
-                          }`}
-                        >
-                          {itemStep}
-                        </span>
-                        <span>{label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+            {/* Mobile logo */}
+            <div className="flex flex-col items-center mb-8 lg:hidden">
+              <Link to="/" className="inline-flex items-center mb-1">
+                <img src={logo} alt="CATOURNE" className="w-9 h-9 rounded-xl object-cover shadow-gold-500/20 shadow-lg" />
+              </Link>
+            </div>
+
+            {/* Heading */}
+            <div className="mb-8">
+              {/* Desktop: small logo */}
+              <Link to="/" className="hidden lg:inline-flex items-center mb-6">
+                <img src={logo} alt="CATOURNE" className="w-8 h-8 rounded-lg object-cover shadow-gold-500/20 shadow-md" />
+              </Link>
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-cream-50 mb-1.5">
+                {step === 1 ? "Créer votre compte" : role === "performer" ? "Inscription Talent" : "Inscription Recruteur"}
+              </h1>
+              <p className="text-cream-500 text-sm">
+                {step === 1 ? "Choisissez votre profil pour commencer" : "Complétez les informations ci-dessous"}
+              </p>
+            </div>
+
+            {/* ── Step 1: Role selection ── */}
+            {step === 1 && (
+              <div className="grid sm:grid-cols-2 gap-4">
+                <RoleCard
+                  title="Je suis Talent"
+                  description="Acteur, figurant, mannequin ou technicien — trouvez des opportunités de casting."
+                  badge="Performeur"
+                  image="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=300&auto=format&fit=crop"
+                  onClick={() => selectRole("performer")}
+                />
+                <RoleCard
+                  title="Je suis Recruteur"
+                  description="Producteur, réalisateur ou directeur de casting — trouvez les meilleurs talents."
+                  badge="Recruteur"
+                  image="https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=300"
+                  onClick={() => selectRole("recruiter")}
+                />
               </div>
+            )}
 
-              {error && (
-                <div className="p-3 bg-wine-700/20 border border-wine-700/30 text-wine-400 text-sm">
-                  {error}
-                </div>
-              )}
+            {/* ── Step 2: Form ── */}
+            {step === 2 && (
+              <form onSubmit={handleSubmit} className="space-y-6">
 
-              {formStep === 1 && (
-                <>
-                  <Input
-                    label="Email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="votre@email.com"
-                    required
-                  />
-
-                  <Input
-                    label="Mot de passe"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Minimum 8 caracteres"
-                    minLength={8}
-                    required
-                  />
-                </>
-              )}
-
-              {role === "performer" && formStep === 2 && (
-                <>
-                  <div className="grid sm:grid-cols-2 gap-5">
-                    <Select
-                      label="Specialite"
-                      value={specialty}
-                      onChange={(e) => setSpecialty(e.target.value)}
-                      required
-                    >
-                      <option value="">Choisir...</option>
-                      {SPECIALTY_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </Select>
-                    <Select
-                      label="Genre"
-                      value={gender}
-                      onChange={(e) => setGender(e.target.value)}
-                      required
-                    >
-                      <option value="">Choisir...</option>
-                      {GENDER_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </Select>
-                    <Select
-                      label="Ville"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      required
-                    >
-                      <option value="">Choisir...</option>
-                      {CITY_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-
-                  <div>
-                    <span className="block text-xs font-medium uppercase tracking-widest text-cream-400 mb-2">
-                      Langues
-                    </span>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {LANGUAGE_OPTIONS.map((option) => {
-                        const checked = languages.includes(option);
-                        return (
-                          <label
-                            key={option}
-                            className="flex items-center gap-2 rounded-sm border border-noir-600 bg-noir-800 px-3 py-2 text-sm text-cream-100"
-                          >
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4 accent-gold-500"
-                              checked={checked}
-                              onChange={() => handleLanguageToggle(option)}
-                            />
-                            <span>{option}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <Input
-                    label="Telephone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="0600752594"
-                    required
-                  />
-                </>
-              )}
-
-              {role === "performer" && formStep === 3 && (
-                <div className="grid sm:grid-cols-2 gap-5">
-                  <Input
-                    label="Taille (cm)"
-                    type="number"
-                    min={1}
-                    value={heightCm}
-                    onChange={(e) => setHeightCm(e.target.value)}
-                    placeholder="178"
-                    required
-                  />
-                  <Input
-                    label="Poids (kg)"
-                    type="number"
-                    min={1}
-                    step="0.1"
-                    value={weightKg}
-                    onChange={(e) => setWeightKg(e.target.value)}
-                    placeholder="70"
-                    required
-                  />
-                  <Input
-                    label="Tour de cou (cm)"
-                    type="number"
-                    min={1}
-                    value={neckCircumferenceCm}
-                    onChange={(e) => setNeckCircumferenceCm(e.target.value)}
-                    placeholder="38"
-                    required
-                  />
-                  <Input
-                    label="Longueur pantalon (cm)"
-                    type="number"
-                    min={1}
-                    value={pantLengthCm}
-                    onChange={(e) => setPantLengthCm(e.target.value)}
-                    placeholder="94"
-                    required
-                  />
-                  <Input
-                    label="Tour de tete (cm)"
-                    type="number"
-                    min={1}
-                    value={headCircumferenceCm}
-                    onChange={(e) => setHeadCircumferenceCm(e.target.value)}
-                    placeholder="59"
-                    required
-                  />
-                  <Input
-                    label="Tour de poitrine (cm)"
-                    type="number"
-                    min={1}
-                    value={chestCircumferenceCm}
-                    onChange={(e) => setChestCircumferenceCm(e.target.value)}
-                    placeholder="88"
-                    required
-                  />
-                  <Input
-                    label="Pointure chaussures"
-                    type="number"
-                    min={1}
-                    value={shoeSize}
-                    onChange={(e) => setShoeSize(e.target.value)}
-                    placeholder="42"
-                    required
-                  />
-                </div>
-              )}
-
-              {role === "performer" && formStep === 4 && (
-                <div className="grid sm:grid-cols-2 gap-5">
-                  <div>
-                    <Input
-                      label="Photo de profil"
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif"
-                      onChange={handleProfilePhotoChange}
-                      required
-                    />
-                    <p className="text-xs text-cream-500 mt-2">Formats: JPG, PNG, WEBP, GIF (max 5 MB).</p>
-                    {profilePhoto && (
-                      <p className="text-xs text-gold-500 mt-2">
-                        Selectionnee: {profilePhoto.name}
-                      </p>
-                    )}
-                    {profilePreviewUrl && (
-                      <div className="mt-3">
-                        <p className="text-xs text-cream-500 mb-2 uppercase tracking-widest">Apercu profil</p>
-                        <img
-                          src={profilePreviewUrl}
-                          alt="Apercu photo de profil"
-                          className="h-32 w-32 rounded-sm object-cover border border-noir-600"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <Input
-                      label="Galerie (photos)"
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif"
-                      multiple
-                      onChange={handleGalleryPhotosChange}
-                    />
-                    <p className="text-xs text-cream-500 mt-2">Optionnel, 12 photos max (20 au total dans la galerie).</p>
-                    {galleryPhotos.length > 0 && (
-                      <>
-                        <p className="text-xs text-gold-500 mt-2">
-                          {galleryPhotos.length} fichier(s) selectionne(s).
-                        </p>
-                          <div className="mt-3">
-                            <p className="text-xs text-cream-500 mb-2 uppercase tracking-widest">Apercu galerie</p>
-                            <div className="grid grid-cols-4 gap-2">
-                              {visibleGalleryPreviewUrls.map((url, index) => {
-                                const isOverlayTile =
-                                  hiddenGalleryImagesCount > 0 &&
-                                  index === visibleGalleryPreviewUrls.length - 1;
-
-                                if (isOverlayTile) {
-                                  return (
-                                    <button
-                                      key={`${url}-${index + 1}`}
-                                      type="button"
-                                      className="relative h-20 w-full rounded-sm overflow-hidden border border-noir-600 cursor-pointer"
-                                      onClick={() => setGalleryModalOpen(true)}
-                                    >
-                                      <img
-                                        src={url}
-                                        alt={`Apercu galerie ${index + 1}`}
-                                        className="h-full w-full object-cover"
-                                      />
-                                      <span className="absolute inset-0 flex items-center justify-center bg-noir-950/70 text-cream-100 text-lg font-semibold">
-                                        +{hiddenGalleryImagesCount}
-                                      </span>
-                                    </button>
-                                  );
-                                }
-
-                                return (
-                                  <img
-                                    key={`${url}-${index + 1}`}
-                                    src={url}
-                                    alt={`Apercu galerie ${index + 1}`}
-                                    className="h-20 w-full rounded-sm object-cover border border-noir-600"
-                                  />
-                                );
-                              })}
+                {/* Step indicator */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    {formStepLabels.map((label, index) => {
+                      const s = index + 1;
+                      const active = s === formStep;
+                      const done = s < formStep;
+                      return (
+                        <div key={label} className="flex items-center flex-1 last:flex-none">
+                          <div className="flex flex-col items-center gap-1">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-300 ${
+                              done ? "bg-gold-500 text-noir-950" : active ? "bg-gold-500/20 border-2 border-gold-500 text-gold-400" : "bg-white/6 border border-white/10 text-neutral-500"
+                            }`}>
+                              {done ? <CheckCircle2 className="w-4 h-4" /> : s}
                             </div>
-                            {hiddenGalleryImagesCount > 0 && (
-                              <p className="text-xs text-cream-500 mt-2">
-                                Cliquez sur +{hiddenGalleryImagesCount} pour voir toute la galerie.
-                              </p>
-                            )}
+                            <span className={`text-[9px] font-semibold uppercase tracking-wider hidden sm:block ${active ? "text-gold-400" : done ? "text-gold-600" : "text-neutral-600"}`}>
+                              {label}
+                            </span>
                           </div>
-                        </>
+                          {index < formStepLabels.length - 1 && (
+                            <div className="flex-1 mx-2 h-px mt-[-14px]" style={{ background: s < formStep ? "rgba(194,142,76,0.6)" : "rgba(255,255,255,0.08)" }} />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Error */}
+                {error && (
+                  <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-500/8 border border-red-500/20 text-red-400 text-sm">
+                    <span className="shrink-0 mt-0.5">⚠</span>
+                    {error}
+                  </div>
+                )}
+
+                {/* ── Compte ── */}
+                {formStep === 1 && (
+                  <div className="space-y-4">
+                    {/* Nom / Prénom */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField label="Prénom">
+                        <input
+                          type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                          placeholder="Youssef" required autoComplete="given-name"
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm text-cream-100 placeholder:text-neutral-600 focus:border-gold-500/60 focus:outline-none focus:ring-1 focus:ring-gold-500/20 transition-all"
+                        />
+                      </FormField>
+                      <FormField label="Nom">
+                        <input
+                          type="text" value={lastName} onChange={(e) => setLastName(e.target.value)}
+                          placeholder="Benali" required autoComplete="family-name"
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm text-cream-100 placeholder:text-neutral-600 focus:border-gold-500/60 focus:outline-none focus:ring-1 focus:ring-gold-500/20 transition-all"
+                        />
+                      </FormField>
+                    </div>
+                    <FormField label="Adresse email">
+                      <input
+                        type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                        placeholder="votre@email.com" required
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm text-cream-100 placeholder:text-neutral-600 focus:border-gold-500/60 focus:outline-none focus:ring-1 focus:ring-gold-500/20 transition-all"
+                      />
+                    </FormField>
+                    <FormField label="Mot de passe">
+                      <input
+                        type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Minimum 8 caractères" minLength={8} required
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm text-cream-100 placeholder:text-neutral-600 focus:border-gold-500/60 focus:outline-none focus:ring-1 focus:ring-gold-500/20 transition-all"
+                      />
+                    </FormField>
+                  </div>
+                )}
+
+                {/* ── Profil ── */}
+                {role === "performer" && formStep === 2 && (
+                  <div className="space-y-4">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <FormField label="Spécialité">
+                        <StyledSelect value={specialty} onChange={(e) => setSpecialty(e.target.value)} required>
+                          <option value="">Choisir...</option>
+                          {SPECIALTY_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                        </StyledSelect>
+                      </FormField>
+                      <FormField label="Genre">
+                        <StyledSelect value={gender} onChange={(e) => setGender(e.target.value)} required>
+                          <option value="">Choisir...</option>
+                          {GENDER_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                        </StyledSelect>
+                      </FormField>
+                      <FormField label="Ville">
+                        <StyledSelect value={city} onChange={(e) => setCity(e.target.value)} required>
+                          <option value="">Choisir...</option>
+                          {CITY_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                        </StyledSelect>
+                      </FormField>
+                      <FormField label="Téléphone">
+                        <input
+                          type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+                          placeholder="0600000000" required
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm text-cream-100 placeholder:text-neutral-600 focus:border-gold-500/60 focus:outline-none focus:ring-1 focus:ring-gold-500/20 transition-all"
+                        />
+                      </FormField>
+                    </div>
+                    <FormField label="Langues parlées">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                        {LANGUAGE_OPTIONS.map((l) => {
+                          const checked = languages.includes(l);
+                          return (
+                            <button
+                              key={l} type="button"
+                              onClick={() => handleLanguageToggle(l)}
+                              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 border ${
+                                checked ? "bg-gold-500/15 border-gold-500/50 text-gold-400" : "bg-white/4 border-white/8 text-neutral-400 hover:border-white/20 hover:text-cream-300"
+                              }`}
+                            >
+                              {checked && <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />}
+                              {l}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </FormField>
+                  </div>
+                )}
+
+                {/* ── Mensurations ── */}
+                {role === "performer" && formStep === 3 && (
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {[
+                      { label: "Taille (cm)", value: heightCm, set: setHeightCm, placeholder: "178" },
+                      { label: "Poids (kg)", value: weightKg, set: setWeightKg, placeholder: "70" },
+                      { label: "Tour de cou (cm)", value: neckCircumferenceCm, set: setNeckCircumferenceCm, placeholder: "38" },
+                      { label: "Longueur pantalon (cm)", value: pantLengthCm, set: setPantLengthCm, placeholder: "94" },
+                      { label: "Tour de tête (cm)", value: headCircumferenceCm, set: setHeadCircumferenceCm, placeholder: "59" },
+                      { label: "Tour de poitrine (cm)", value: chestCircumferenceCm, set: setChestCircumferenceCm, placeholder: "88" },
+                      { label: "Pointure chaussures", value: shoeSize, set: setShoeSize, placeholder: "42" },
+                    ].map(({ label, value, set, placeholder }) => (
+                      <FormField key={label} label={label}>
+                        <input
+                          type="number" min={1} value={value} onChange={(e) => set(e.target.value)}
+                          placeholder={placeholder} required
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm text-cream-100 placeholder:text-neutral-600 focus:border-gold-500/60 focus:outline-none focus:ring-1 focus:ring-gold-500/20 transition-all"
+                        />
+                      </FormField>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── Photos ── */}
+                {role === "performer" && formStep === 4 && (
+                  <div className="space-y-5">
+                    {/* Profile photo */}
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-3">Photo de profil *</p>
+                      <label className={`flex flex-col items-center justify-center gap-3 h-36 rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-200 ${profilePreviewUrl ? "border-gold-500/40 bg-gold-500/5" : "border-white/10 bg-white/3 hover:border-gold-500/30 hover:bg-white/5"}`}>
+                        {profilePreviewUrl ? (
+                          <img src={profilePreviewUrl} alt="Aperçu" className="h-full w-full object-cover rounded-2xl" />
+                        ) : (
+                          <>
+                            <Upload className="w-6 h-6 text-neutral-500" />
+                            <div className="text-center">
+                              <p className="text-sm text-cream-300 font-medium">Cliquez pour choisir</p>
+                              <p className="text-xs text-neutral-500 mt-0.5">JPG, PNG, WEBP · max 5 MB</p>
+                            </div>
+                          </>
+                        )}
+                        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleProfilePhotoChange} className="hidden" required />
+                      </label>
+                      {profilePhoto && (
+                        <p className="text-xs text-gold-400 mt-2 font-medium">✓ {profilePhoto.name}</p>
                       )}
                     </div>
+
+                    {/* Gallery */}
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-3">Galerie photos <span className="text-neutral-600 normal-case font-normal tracking-normal">(optionnel, 12 max)</span></p>
+                      <label className="flex flex-col items-center justify-center gap-3 h-28 rounded-2xl border-2 border-dashed border-white/10 bg-white/3 cursor-pointer hover:border-gold-500/30 hover:bg-white/5 transition-all duration-200">
+                        <ImagePlus className="w-5 h-5 text-neutral-500" />
+                        <p className="text-sm text-cream-300 font-medium">Ajouter des photos</p>
+                        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple onChange={handleGalleryPhotosChange} className="hidden" />
+                      </label>
+                      {galleryPhotos.length > 0 && (
+                        <div className="mt-3">
+                          <div className="grid grid-cols-4 gap-2">
+                            {visibleGalleryPreviewUrls.map((url, index) => {
+                              const isOverlay = hiddenGalleryImagesCount > 0 && index === visibleGalleryPreviewUrls.length - 1;
+                              return isOverlay ? (
+                                <button key={`${url}-${index}`} type="button" onClick={() => setGalleryModalOpen(true)}
+                                  className="relative h-20 w-full rounded-xl overflow-hidden border border-white/10 cursor-pointer">
+                                  <img src={url} alt="" className="h-full w-full object-cover" />
+                                  <span className="absolute inset-0 flex items-center justify-center bg-noir-950/70 text-cream-100 text-lg font-bold">+{hiddenGalleryImagesCount}</span>
+                                </button>
+                              ) : (
+                                <img key={`${url}-${index}`} src={url} alt="" className="h-20 w-full rounded-xl object-cover border border-white/10" />
+                              );
+                            })}
+                          </div>
+                          <p className="text-xs text-gold-400 mt-2 font-medium">✓ {galleryPhotos.length} photo(s) sélectionnée(s)</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-1">
+                  {role === "performer" && formStep > 1 && (
+                    <button type="button" onClick={handlePreviousStep}
+                      className="flex items-center gap-2 px-5 py-3.5 rounded-2xl border border-white/10 bg-white/4 text-cream-300 text-sm font-semibold hover:bg-white/8 hover:text-cream-100 transition-all">
+                      <ChevronLeft className="w-4 h-4" />
+                      Retour
+                    </button>
+                  )}
+                  {role === "performer" && !isLastFormStep ? (
+                    <button type="button" onClick={handleNextStep}
+                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gold-500 text-noir-950 text-sm font-bold uppercase tracking-widest hover:bg-gold-400 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-gold-500/20">
+                      Continuer
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button type="submit" disabled={loading}
+                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gold-500 text-noir-950 text-sm font-bold uppercase tracking-widest hover:bg-gold-400 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-gold-500/20 disabled:opacity-50 disabled:pointer-events-none">
+                      {loading ? (
+                        <><span className="w-4 h-4 border-2 border-noir-950/30 border-t-noir-950 rounded-full animate-spin" />Création...</>
+                      ) : "Créer mon compte"}
+                    </button>
+                  )}
                 </div>
-              )}
 
-              <div className="pt-2 flex gap-3">
-                {role === "performer" && formStep > 1 && (
-                  <Button type="button" variant="outline" size="lg" onClick={handlePreviousStep}>
-                    Precedent
-                  </Button>
+                {!preselectedRole && (
+                  <button type="button" onClick={() => { setStep(1); setFormStep(1); setError(""); }}
+                    className="w-full text-center text-xs text-neutral-500 hover:text-gold-400 transition-colors py-1">
+                    ← Changer de profil
+                  </button>
                 )}
+              </form>
+            )}
 
-                {role === "performer" && !isLastFormStep ? (
-                  <Button type="button" className="flex-1" size="lg" onClick={handleNextStep}>
-                    Suivant
-                  </Button>
-                ) : (
-                  <Button type="submit" className="flex-1" size="lg" disabled={loading}>
-                    {loading ? "Creation..." : "Creer mon compte"}
-                  </Button>
-                )}
-              </div>
-
-              {!preselectedRole && (
-                <button
-                  type="button"
-                  className="w-full text-center text-sm text-cream-500 hover:text-gold-400 transition-colors"
-                  onClick={() => {
-                    setStep(1);
-                    setFormStep(1);
-                    setError("");
-                  }}
-                >
-                  &larr; Changer de profil
-                </button>
-              )}
-            </form>
-          </Card>
-        )}
-
-        <p className="text-center mt-8 text-sm text-cream-500">
-          Deja inscrit ?{" "}
-          <Link to="/login" className="text-gold-500 font-medium hover:text-gold-400 transition-colors">
-            Se connecter
-          </Link>
-        </p>
+            <p className="text-center mt-8 text-sm text-neutral-500">
+              Déjà inscrit ?{" "}
+              <Link to="/login" className="text-gold-400 font-semibold hover:text-gold-300 transition-colors">
+                Se connecter
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
 
+      {/* Gallery modal */}
       {galleryModalOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-noir-950/80 backdrop-blur-sm flex items-center justify-center p-5"
-          onClick={() => setGalleryModalOpen(false)}
-        >
-          <div
-            className="w-full max-w-4xl max-h-[85vh] overflow-auto bg-noir-900 border border-noir-700 p-6"
-            onClick={(event) => event.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 bg-noir-950/85 backdrop-blur-md flex items-center justify-center p-5" onClick={() => setGalleryModalOpen(false)}>
+          <div className="w-full max-w-3xl max-h-[85vh] overflow-auto bg-noir-900 border border-white/10 rounded-3xl p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-cream-100 font-display text-xl">
-                Galerie complete ({recentGalleryPreviewUrls.length})
-              </h3>
-              <Button type="button" variant="outline" size="sm" onClick={() => setGalleryModalOpen(false)}>
+              <h3 className="text-cream-100 font-serif text-lg font-bold">Galerie complète ({recentGalleryPreviewUrls.length})</h3>
+              <button type="button" onClick={() => setGalleryModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-widest text-cream-300 hover:text-cream-100 hover:border-white/20 transition-all">
                 Fermer
-              </Button>
+              </button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {recentGalleryPreviewUrls.map((url, index) => (
-                <img
-                  key={`modal-${url}-${index + 1}`}
-                  src={url}
-                  alt={`Galerie ${index + 1}`}
-                  className="h-36 w-full rounded-sm object-cover border border-noir-600"
-                />
+              {recentGalleryPreviewUrls.map((url, i) => (
+                <img key={`modal-${url}-${i}`} src={url} alt={`Galerie ${i + 1}`} className="h-36 w-full rounded-2xl object-cover border border-white/8" />
               ))}
             </div>
           </div>
         </div>
       )}
+    </>
+  );
+}
+
+/* ── Sub-components ─────────────────────────────────────────── */
+
+function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold uppercase tracking-widest text-neutral-400 mb-2">{label}</label>
+      {children}
     </div>
   );
 }
 
-function RoleCard({
-  title,
-  description,
-  icon,
-  color,
-  onClick,
-}: {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  color: "gold" | "cream";
-  onClick: () => void;
-}) {
-  const borderHover = color === "gold" ? "hover:border-gold-600/60" : "hover:border-cream-400/30";
-  const iconColor = color === "gold" ? "text-gold-500 border-gold-700/40" : "text-cream-300 border-cream-400/20";
-
+function StyledSelect({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`text-left p-6 bg-noir-800/60 border border-noir-700 ${borderHover} hover:bg-noir-800 transition-all duration-300 cursor-pointer group`}
+    <select
+      {...props}
+      className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm text-cream-100 focus:border-gold-500/60 focus:outline-none focus:ring-1 focus:ring-gold-500/20 transition-all appearance-none"
     >
-      <div className={`w-14 h-14 border ${iconColor} flex items-center justify-center mb-5 group-hover:bg-noir-700/50 transition-all duration-300`}>
-        {icon}
+      {children}
+    </select>
+  );
+}
+
+function RoleCard({ title, description, badge, image, onClick }: {
+  title: string; description: string; badge: string; image: string; onClick: () => void;
+}) {
+  return (
+    <button type="button" onClick={onClick}
+      className="relative group text-left rounded-3xl overflow-hidden border border-white/10 hover:border-gold-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-gold-500/10 active:scale-[0.98]"
+      style={{ minHeight: 220 }}
+    >
+      {/* Background portrait */}
+      <img src={image} alt={title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
+      <div className="absolute inset-0 bg-gradient-to-t from-noir-950/95 via-noir-950/50 to-noir-950/20" />
+      <div className="absolute inset-0 bg-gradient-to-t from-noir-950/60 to-transparent group-hover:from-noir-950/40 transition-all duration-300" />
+
+      {/* Badge */}
+      <div className="absolute top-4 left-4">
+        <span className="px-3 py-1 rounded-full bg-gold-500/15 border border-gold-500/30 text-[10px] font-bold uppercase tracking-widest text-gold-400">
+          {badge}
+        </span>
       </div>
-      <h3 className="font-display font-semibold text-lg text-cream-100 mb-2">{title}</h3>
-      <p className="text-sm text-cream-500 leading-relaxed">{description}</p>
+
+      {/* Arrow */}
+      <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 border border-white/15 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-1 group-hover:translate-x-0">
+        <ChevronRight className="w-4 h-4 text-cream-200" />
+      </div>
+
+      {/* Content */}
+      <div className="absolute bottom-0 left-0 right-0 p-5">
+        <h3 className="font-serif text-base font-bold text-cream-50 mb-1">{title}</h3>
+        <p className="text-xs text-cream-400 leading-relaxed">{description}</p>
+      </div>
     </button>
   );
 }

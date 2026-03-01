@@ -23,6 +23,8 @@ interface FocusRailProps {
   autoPlay?: boolean;
   interval?: number;
   className?: string;
+  onActiveChange?: (index: number, item: FocusRailItem) => void;
+  showAmbience?: boolean;
 }
 
 function wrap(min: number, max: number, v: number) {
@@ -51,6 +53,8 @@ export function FocusRail({
   autoPlay = false,
   interval = 4000,
   className,
+  onActiveChange,
+  showAmbience = true,
 }: FocusRailProps) {
   const [active, setActive] = React.useState(initialIndex);
   const [isHovering, setIsHovering] = React.useState(false);
@@ -96,6 +100,11 @@ export function FocusRail({
     return () => clearInterval(timer);
   }, [autoPlay, isHovering, handleNext, interval]);
 
+  React.useEffect(() => {
+    onActiveChange?.(activeIndex, activeItem);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIndex]);
+
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowLeft") handlePrev();
     if (e.key === "ArrowRight") handleNext();
@@ -121,7 +130,8 @@ export function FocusRail({
   return (
     <div
       className={cn(
-        "group relative flex h-[600px] w-full flex-col overflow-hidden bg-noir-950 text-cream-100 outline-none select-none overflow-x-hidden",
+        "group relative flex h-[600px] w-full flex-col overflow-hidden text-cream-100 outline-none select-none overflow-x-hidden",
+        showAmbience ? "bg-noir-950" : "bg-transparent",
         className
       )}
       onMouseEnter={() => setIsHovering(true)}
@@ -131,6 +141,7 @@ export function FocusRail({
       onWheel={onWheel}
     >
       {/* Background Ambience */}
+      {showAmbience && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         <AnimatePresence mode="popLayout">
           <motion.div
@@ -150,6 +161,7 @@ export function FocusRail({
           </motion.div>
         </AnimatePresence>
       </div>
+      )}
 
       {/* Main Stage */}
       <div className="relative z-10 flex flex-1 flex-col justify-center px-4 md:px-8">
