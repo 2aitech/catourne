@@ -6,8 +6,7 @@ import type { Role } from "../lib/types";
 import { Button, Input, Card, Select } from "../components/ui";
 
 const SPECIALTY_OPTIONS = [
-  "Acteur",
-  "Actrice",
+  "Acteur/Actrice",
   "Figurant",
   "Danseur",
   "Chanteur",
@@ -29,6 +28,8 @@ const CITY_OPTIONS = [
   "Oujda",
   "Kenitra",
   "Tetouan",
+  "Ouarzazate",
+  "Rachidia",
 ];
 
 const LANGUAGE_OPTIONS = [
@@ -41,6 +42,8 @@ const LANGUAGE_OPTIONS = [
   "Allemand",
   "Portugais",
 ];
+
+const GENDER_OPTIONS = ["Homme", "Femme", "Autre"];
 
 const MAX_GALLERY_FILES = 12;
 const MAX_GALLERY_PREVIEW_TILES = 4;
@@ -58,6 +61,7 @@ export function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [specialty, setSpecialty] = useState("");
+  const [gender, setGender] = useState("");
   const [city, setCity] = useState("");
   const [languages, setLanguages] = useState<string[]>([]);
   const [phone, setPhone] = useState("");
@@ -194,8 +198,8 @@ export function RegisterPage() {
       return validateAccountStep();
     }
     if (stepValue === 2) {
-      if (!specialty || !city || languages.length === 0 || !phone) {
-        return "Specialite, ville, langues et telephone sont obligatoires.";
+      if (!specialty || !gender || !city || languages.length === 0 || !phone) {
+        return "Specialite, genre, ville, langues et telephone sont obligatoires.";
       }
       return "";
     }
@@ -279,6 +283,7 @@ export function RegisterPage() {
           method: "PATCH",
           body: {
             specialty,
+            gender,
             city,
             languages,
             phone,
@@ -449,6 +454,19 @@ export function RegisterPage() {
                     >
                       <option value="">Choisir...</option>
                       {SPECIALTY_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </Select>
+                    <Select
+                      label="Genre"
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                      required
+                    >
+                      <option value="">Choisir...</option>
+                      {GENDER_OPTIONS.map((option) => (
                         <option key={option} value={option}>
                           {option}
                         </option>

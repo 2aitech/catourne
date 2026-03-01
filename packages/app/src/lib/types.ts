@@ -9,6 +9,7 @@ export type AuthUser = {
 export type PerformerProfile = {
   user_id: string;
   stage_name: string;
+  gender: string;
   city: string;
   bio: string;
   specialty: string;
@@ -86,6 +87,7 @@ export type ReportItem = {
 
 export type PerformerProfileInput = {
   stage_name: string;
+  gender: string;
   city: string;
   specialty: string;
   languages: string[];

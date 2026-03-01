@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS performer_profiles (
   user_id TEXT PRIMARY KEY,
   stage_name TEXT DEFAULT '',
+  gender TEXT DEFAULT '',
   city TEXT DEFAULT '',
   bio TEXT DEFAULT '',
   specialty TEXT DEFAULT '',
@@ -165,6 +166,7 @@ const performerProfileColumns = new Set(
 );
 
 const performerProfileExtraColumns: Array<[string, string]> = [
+  ["gender", "TEXT DEFAULT ''"],
   ["phone", "TEXT DEFAULT ''"],
   ["height_cm", "TEXT DEFAULT ''"],
   ["weight_kg", "TEXT DEFAULT ''"],

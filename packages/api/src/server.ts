@@ -232,6 +232,7 @@ function getPerformerProfile(userId: string) {
       SELECT
         user_id,
         stage_name,
+        gender,
         city,
         bio,
         specialty,
@@ -256,6 +257,7 @@ function getPerformerProfile(userId: string) {
     | {
         user_id: string;
         stage_name: string;
+        gender: string;
         city: string;
         bio: string;
         specialty: string;
@@ -828,7 +830,7 @@ Bun.serve({
 
       if (method === "GET" && pathname === "/performers") {
         const rows = db.query(
-          `SELECT pp.user_id, pp.stage_name, pp.city, pp.bio, pp.specialty,
+          `SELECT pp.user_id, pp.stage_name, pp.gender, pp.city, pp.bio, pp.specialty,
                   pp.photo_url, pp.languages_json, pp.completion_score
            FROM performer_profiles pp
            JOIN users u ON u.id = pp.user_id
@@ -840,6 +842,7 @@ Bun.serve({
         const performers = rows.map((r) => ({
           user_id: asString(r.user_id),
           stage_name: asString(r.stage_name),
+          gender: asString(r.gender),
           city: asString(r.city),
           bio: asString(r.bio),
           specialty: asString(r.specialty),
@@ -868,6 +871,7 @@ Bun.serve({
         }
         const body = await readJson<{
           stage_name?: string;
+          gender?: string;
           city?: string;
           bio?: string;
           specialty?: string;
@@ -894,6 +898,7 @@ Bun.serve({
 
         const merged = {
           stage_name: body.stage_name !== undefined ? asString(body.stage_name) : current.stage_name,
+          gender: body.gender !== undefined ? asString(body.gender) : current.gender,
           city: body.city !== undefined ? asString(body.city) : current.city,
           bio: body.bio !== undefined ? asString(body.bio) : current.bio,
           specialty: body.specialty !== undefined ? asString(body.specialty) : current.specialty,
@@ -932,6 +937,7 @@ Bun.serve({
           UPDATE performer_profiles
           SET
             stage_name = ?,
+            gender = ?,
             city = ?,
             bio = ?,
             specialty = ?,
@@ -951,6 +957,7 @@ Bun.serve({
           `,
         ).run(
           merged.stage_name,
+          merged.gender,
           merged.city,
           merged.bio,
           merged.specialty,
@@ -984,6 +991,7 @@ Bun.serve({
           profile: {
             user_id: profile.user_id,
             stage_name: profile.stage_name,
+            gender: profile.gender,
             city: profile.city,
             bio: profile.bio,
             specialty: profile.specialty,

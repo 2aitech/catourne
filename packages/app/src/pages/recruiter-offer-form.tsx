@@ -15,6 +15,21 @@ const PROJECT_TYPES = [
   "Autre",
 ];
 
+const CITY_OPTIONS = [
+  "Casablanca",
+  "Rabat",
+  "Marrakech",
+  "Tanger",
+  "Fes",
+  "Agadir",
+  "Meknes",
+  "Oujda",
+  "Kenitra",
+  "Tetouan",
+  "Ouarzazate",
+  "Rachidia",
+];
+
 export function RecruiterOfferFormPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState<OfferInput>({
@@ -116,14 +131,17 @@ export function RecruiterOfferFormPage() {
                   <option key={t} value={t}>{t}</option>
                 ))}
               </Select>
-              <Input
+              <Select
                 label="Ville"
-                type="text"
                 value={form.city}
                 onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
-                placeholder="Casablanca, Rabat..."
                 required
-              />
+              >
+                <option value="">Choisir...</option>
+                {CITY_OPTIONS.map((city) => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </Select>
             </div>
 
             <Input

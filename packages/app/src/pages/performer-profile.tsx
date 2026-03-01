@@ -4,8 +4,7 @@ import type { PerformerProfile, PerformerProfileInput } from "../lib/types";
 import { Button, Input, Textarea, Card, Badge, Select, PageContainer } from "../components/ui";
 
 const SPECIALTY_OPTIONS = [
-  "Acteur",
-  "Actrice",
+  "Acteur/Actrice",
   "Figurant",
   "Danseur",
   "Chanteur",
@@ -27,6 +26,8 @@ const CITY_OPTIONS = [
   "Oujda",
   "Kenitra",
   "Tetouan",
+  "Ouarzazate",
+  "Rachidia",
 ];
 
 const LANGUAGE_OPTIONS = [
@@ -40,12 +41,15 @@ const LANGUAGE_OPTIONS = [
   "Portugais",
 ];
 
+const GENDER_OPTIONS = ["Homme", "Femme", "Autre"];
+
 const MAX_GALLERY_FILES = 12;
 
 export function PerformerProfilePage() {
   const [profile, setProfile] = useState<PerformerProfile | null>(null);
   const [form, setForm] = useState<PerformerProfileInput>({
     stage_name: "",
+    gender: "",
     city: "",
     specialty: "",
     languages: [],
@@ -75,6 +79,7 @@ export function PerformerProfilePage() {
         if (data.profile) {
           setForm({
             stage_name: data.profile.stage_name ?? "",
+            gender: data.profile.gender ?? "",
             city: data.profile.city ?? "",
             specialty: data.profile.specialty ?? "",
             languages: data.profile.languages ?? [],
@@ -271,6 +276,16 @@ export function PerformerProfilePage() {
               >
                 <option value="">Choisir...</option>
                 {CITY_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </Select>
+              <Select
+                label="Genre"
+                value={form.gender}
+                onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value }))}
+              >
+                <option value="">Choisir...</option>
+                {GENDER_OPTIONS.map((option) => (
                   <option key={option} value={option}>{option}</option>
                 ))}
               </Select>

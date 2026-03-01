@@ -6,6 +6,7 @@ import { request, formatDate } from "../lib/api";
 import type { Offer } from "../lib/types";
 import { Button, Badge, PageContainer } from "../components/ui";
 import { CardStack } from "../components/ui/card-stack";
+import { FocusRail, type FocusRailItem } from "../components/ui/focus-rail";
 import heroBackground from "../assets/ait-benhaddou-moroccan-ancient-fortress-2026-01-07-06-29-51-utc.jpg";
 
 export function HomePage() {
@@ -271,16 +272,20 @@ export function HomePage() {
         <PageContainer className="relative">
 
           {/* Header */}
-          <div className="text-center mb-12">
-            <span className="text-gold-500 text-[10px] font-bold uppercase tracking-[0.4em] mb-3 block">
-              {h.gridLabel}
-            </span>
-            <h2 className="font-serif text-4xl font-bold text-cream-100 sm:text-5xl md:text-6xl">
-              {h.gridHeading}
-            </h2>
-            <p className="mt-4 text-cream-400 max-w-xl mx-auto text-sm">
-              {h.heroDesc}
-            </p>
+          <div className="flex flex-col items-center mb-12 gap-5 text-center">
+            <div className="max-w-3xl">
+              <span className="text-gold-500 text-[10px] font-bold uppercase tracking-[0.4em] mb-4 block">
+                {h.gridLabel}
+              </span>
+              <h2 className="font-serif text-4xl font-bold text-cream-100 sm:text-5xl md:text-6xl leading-tight">
+                {h.gridHeading.split(h.gridInfiniteAccent)[0]}
+                <span className="text-gradient-gold italic">{h.gridInfiniteAccent}</span>
+                {h.gridHeading.split(h.gridInfiniteAccent)[1]}
+              </h2>
+              <p className="mt-4 text-cream-500 max-w-xl mx-auto text-sm leading-relaxed">
+                {h.heroDesc}
+              </p>
+            </div>
           </div>
 
           {/* Category filter pills */}
@@ -350,9 +355,9 @@ export function HomePage() {
                 {h.gridInfiniteLabel}
               </span>
               <h2 className="font-serif text-4xl font-bold text-cream-100 sm:text-5xl md:text-6xl leading-tight">
-                {h.gridHeading.split(h.gridInfiniteAccent)[0]}
+                {h.gridInfiniteHeading.split(h.gridInfiniteAccent)[0]}
                 <span className="text-gradient-gold italic">{h.gridInfiniteAccent}</span>
-                {h.gridHeading.split(h.gridInfiniteAccent)[1]}
+                {h.gridInfiniteHeading.split(h.gridInfiniteAccent)[1]}
               </h2>
               <p className="mt-4 text-cream-500 max-w-xl mx-auto text-sm leading-relaxed">
                 {h.heroDesc}
@@ -364,33 +369,45 @@ export function HomePage() {
           <CardStack
             items={[
               {
-                id: "actor",
-                title: h.filtersCategoryActor,
+                id: "film",
+                title: "Film",
                 imageSrc: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=800",
                 href: "/offers",
               },
               {
-                id: "extra",
-                title: h.filtersCategoryExtra,
+                id: "serie-tv",
+                title: "Série TV",
                 imageSrc: "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=800",
                 href: "/offers",
               },
               {
-                id: "model",
-                title: h.filtersCategoryModel,
-                imageSrc: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800",
+                id: "court-metrage",
+                title: "Court-métrage",
+                imageSrc: "https://images.unsplash.com/photo-1533750349088-cd871a92f312?auto=format&fit=crop&q=80&w=800",
                 href: "/offers",
               },
               {
-                id: "tech",
-                title: h.filtersCategoryTech,
+                id: "publicite",
+                title: "Publicité",
                 imageSrc: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&q=80&w=800",
                 href: "/offers",
               },
               {
-                id: "voice",
-                title: h.filtersCategoryVoice,
+                id: "clip-musical",
+                title: "Clip musical",
                 imageSrc: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=800",
+                href: "/offers",
+              },
+              {
+                id: "theatre",
+                title: "Théâtre",
+                imageSrc: "https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&fit=crop&q=80&w=800",
+                href: "/offers",
+              },
+              {
+                id: "evenement",
+                title: "Événement",
+                imageSrc: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80&w=800",
                 href: "/offers",
               },
             ]}
@@ -424,6 +441,102 @@ export function HomePage() {
             </Link>
           </div>
         </PageContainer>
+      </section>
+
+      {/* ─── PERFORMERS SPOTLIGHT ─── */}
+      <section className="py-24 bg-noir-950 relative border-t border-white/5">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(194,142,76,0.08),transparent_40%)] pointer-events-none" />
+        <PageContainer className="relative z-10">
+          <div className="flex flex-col items-center mb-8 gap-5 text-center">
+            <div className="max-w-3xl">
+              <span className="text-gold-500 text-[10px] font-bold uppercase tracking-[0.4em] mb-4 block">
+                Talents d'exception
+              </span>
+              <h2 className="font-serif text-4xl font-bold text-cream-100 sm:text-5xl md:text-6xl leading-tight">
+                Nos <span className="text-gradient-gold italic">performeurs</span>
+              </h2>
+              <p className="mt-4 text-cream-500 max-w-xl mx-auto text-sm leading-relaxed">
+                Découvrez les artistes qui font vivre le cinéma, la publicité et la mode au Maroc.
+              </p>
+            </div>
+          </div>
+        </PageContainer>
+
+        <FocusRail
+          items={[
+            {
+              id: 1,
+              title: "Amina El Idrissi",
+              description: "Actrice primée, spécialisée dans le cinéma d'auteur et les drames historiques.",
+              meta: "Actrice • Cinéma",
+              imageSrc: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=1000&auto=format&fit=crop",
+              href: "/talents",
+            },
+            {
+              id: 2,
+              title: "Youssef Benali",
+              description: "Mannequin international avec plus de 10 ans d'expérience en mode et publicité.",
+              meta: "Mannequin • Mode",
+              imageSrc: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1000&auto=format&fit=crop",
+              href: "/talents",
+            },
+            {
+              id: 3,
+              title: "Fatima Zahra Ouali",
+              description: "Danseuse contemporaine et chorégraphe, fusionnant tradition et modernité.",
+              meta: "Danseuse • Scène",
+              imageSrc: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000&auto=format&fit=crop",
+              href: "/talents",
+            },
+            {
+              id: 4,
+              title: "Karim Tazi",
+              description: "Acteur de doublage et voix-off pour documentaires et publicités nationales.",
+              meta: "Voix-off • Audio",
+              imageSrc: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1000&auto=format&fit=crop",
+              href: "/talents",
+            },
+            {
+              id: 5,
+              title: "Nora Benmoussa",
+              description: "Figurante et actrice de second rôle, vue dans plus de 30 productions marocaines.",
+              meta: "Figurante • Cinéma",
+              imageSrc: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=1000&auto=format&fit=crop",
+              href: "/talents",
+            },
+            {
+              id: 6,
+              title: "Omar Fassi",
+              description: "Cascadeur professionnel spécialisé dans les scènes d'action et les films d'aventure.",
+              meta: "Cascadeur • Action",
+              imageSrc: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1000&auto=format&fit=crop",
+              href: "/talents",
+            },
+            {
+              id: 7,
+              title: "Leila Chraibi",
+              description: "Modèle photo et influenceuse, ambassadrice de marques marocaines et internationales.",
+              meta: "Modèle • Mode",
+              imageSrc: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1000&auto=format&fit=crop",
+              href: "/talents",
+            },
+          ]}
+          autoPlay
+          interval={5000}
+          loop
+        />
+
+        <div className="mt-10 text-center">
+          <Link to="/talents">
+            <Button
+              variant="outline"
+              className="rounded-full px-12 border-white/20 text-cream-100 hover:border-gold-500 text-[10px] uppercase tracking-widest font-bold group"
+            >
+              Voir tous les talents
+              <span className="ml-2 inline-block transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
+            </Button>
+          </Link>
+        </div>
       </section>
 
       {/* ─── WHY CATOURNE (FeatureShowcase match) ─── */}
@@ -699,26 +812,16 @@ function CastingCard({
 }) {
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-noir-900/70 shadow-2xl hover:shadow-gold-500/10 transition-all duration-300 hover:-translate-y-1 h-full">
-      {/* Cinematic header area */}
-      <div className="relative h-48 overflow-hidden bg-noir-800 shrink-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-gold-800/30 via-noir-800 to-noir-900" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(194,142,76,0.25),transparent_60%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-noir-900/90 to-transparent" />
-
-        <div className="absolute top-4 left-4">
+      {/* Content */}
+      <div className="p-6 flex flex-col flex-1">
+        <div className="flex items-center justify-between mb-4">
           <span className="bg-gold-500 text-noir-950 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">
             {offer.project_type}
           </span>
-        </div>
-        <div className="absolute top-4 right-4">
           <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-cream-500">
             {index + 1 < 10 ? `0${index + 1}` : index + 1}
           </span>
         </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-6 flex flex-col flex-1">
         <h3 className="font-serif text-xl font-bold text-cream-100 mb-1 transition-colors group-hover:text-gold-400 leading-tight">
           {offer.title}
         </h3>
