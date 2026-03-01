@@ -118,7 +118,7 @@ export function Navbar() {
           <Link to="/" className="flex items-center gap-3 group shrink-0">
             <img src={appLogo} alt="CATOURNE" className="w-9 h-9 rounded-xl object-cover" />
             <span className="font-display text-xl font-bold tracking-tight">
-              <span className="text-gold-500">CA</span>
+              <span className="text-gold-500">ÇA</span>
               <span className="text-cream-100">TOURNE</span>
             </span>
           </Link>

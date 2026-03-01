@@ -29,8 +29,10 @@ function RequireRole({ role, children }: { role: Role; children: ReactNode }) {
   if (user.role !== role) {
     return (
       <div className="max-w-md mx-auto mt-24 text-center">
-        <h2 className="font-display text-xl font-bold text-cream-100 mb-2">Acces refuse</h2>
-        <p className="text-cream-500 text-sm">Cette page est reservee au role <strong className="text-gold-400">{role}</strong>.</p>
+        <h2 className="font-serif text-xl font-bold text-cream-100 mb-2">Acces refuse</h2>
+        <p className="font-sans text-cream-500 text-sm">
+          Cette page est reservee au role <strong className="font-display text-gold-400">{role}</strong>.
+        </p>
       </div>
     );
   }
@@ -49,14 +51,14 @@ export function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center font-sans">
         <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col font-sans">
       <Navbar />
       <main className="flex-1">
         <Routes>
